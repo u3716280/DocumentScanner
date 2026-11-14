@@ -15,6 +15,7 @@ public sealed class RedesignTests
     private sealed class Scanner : IScannerService
     {
         public static readonly ScannerCapabilities Caps=new([new(ScanSource.Duplex,[200,600],[ScanColor.Grayscale,ScanColor.BlackAndWhite],["Letter","A4"])],true);
+        public Task<DeviceInfo?> FindDeviceAsync(DeviceInfo saved,CancellationToken ct)=>Task.FromResult<DeviceInfo?>(saved);
         public Task<ScannerCapabilities> GetCapabilitiesAsync(DeviceInfo device,CancellationToken ct)=>Task.FromResult(Caps);
         public Task<(IReadOnlyList<DeviceInfo>,IReadOnlyList<string>)> DiscoverAsync(CancellationToken ct)=>Task.FromResult(((IReadOnlyList<DeviceInfo>)Array.Empty<DeviceInfo>(),(IReadOnlyList<string>)Array.Empty<string>()));
         public Task<DeviceInfo> ConnectEndpointAsync(string endpoint,CancellationToken ct)=>throw new NotSupportedException();

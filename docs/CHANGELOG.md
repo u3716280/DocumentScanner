@@ -1,3 +1,13 @@
+# 1.1.1 — Profile-first initialization
+
+- First-use startup searches all backends; Default Profile startup resolves only its exact device/driver and reads capabilities once.
+- Saved profiles without a usable default wait for user selection; any selected profile can resolve its device without prior full enumeration.
+- Add Reset Profile / F5: clear the active profile and discover all interfaces, retaining saved/default profiles and scan/delivery data.
+- Prevent reentrant device-selector capability queries, duplicate startup initialization and late-cancellation readiness. Failed probes do not mark scanners available.
+- Yield the first WPF frame before initialization; move recovery inspection off the UI thread; add privacy-preserving per-stage timings.
+- Add startup-policy, targeted-query, unavailable/mismatched identity, cancellation and WPF orchestration tests. Actual hardware timing remains to be measured.
+- ERPNext bridge remains version 1.1.0; this release changes Windows initialization only.
+
 # 1.1.0 — Native redesign, complete profiles and ERPNext delivery
 
 - Implement the reviewed native workspace, explicit selected-page save actions, output prefix/format preview and separate scan/page tone scopes.

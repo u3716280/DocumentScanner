@@ -1,4 +1,6 @@
 using System.IO;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using DocumentScanner.ImagingSupport;
 using DocumentScanner.Core;
 using DocumentScanner.Infrastructure;
@@ -10,6 +12,8 @@ using System.Windows.Media.Imaging;
 namespace DocumentScanner.Scanning;
 public sealed class Naps2ScannerService : IScannerService
 {
+    private readonly ILogger<Naps2ScannerService>? log;
+    public Naps2ScannerService(ILogger<Naps2ScannerService>? logger=null)=>log=logger;
     private readonly SemaphoreSlim gate=new(1,1);
     private readonly WpfImageContext images=new();
     public async Task<(IReadOnlyList<DeviceInfo> Devices,IReadOnlyList<string> Warnings)> DiscoverAsync(CancellationToken ct)
@@ -23,15 +27,38 @@ public sealed class Naps2ScannerService : IScannerService
             foreach(var (driver,x64) in drivers)
             {
                 ct.ThrowIfCancellationRequested();
+                long started=Stopwatch.GetTimestamp();
                 try {
                     var options=new ScanOptions{ Driver=driver, TwainOptions=new(){ Dsm=x64?TwainDsm.NewX64:TwainDsm.New } };
                     await foreach(var device in controller.GetDevices(options,ct))
                         found.Add(new($"{driver}|{x64}|{device.ID}",device.Name,driver.ToString(),device.ID,x64));
                 } catch(OperationCanceledException){throw;}
                 catch(Exception ex){warnings.Add($"{driver}{(x64?" 64-bit":"")}: {ScannerErrors.Describe(ex)}");}
+                finally{log?.LogInformation("Discovery backend {Driver} x64={X64} elapsed_ms={Elapsed}",driver,x64,Stopwatch.GetElapsedTime(started).TotalMilliseconds);}
             }
             return(found.DistinctBy(d=>d.Key).ToList(),warnings);
         } finally {gate.Release();}
+    }
+    public async Task<DeviceInfo?> FindDeviceAsync(DeviceInfo saved,CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        if(!Enum.TryParse<Driver>(saved.Driver,out var driver)||!new[]{Driver.Wia,Driver.Twain,Driver.Escl}.Contains(driver))throw new ArgumentException("Unsupported profile scanner driver.");
+        if(saved.Twain64&&(!Environment.Is64BitProcess||driver!=Driver.Twain))throw new InvalidOperationException("This profile requires the x64 application and a TWAIN 64-bit driver.");
+        // An eSCL URL can be contacted directly; do not wait for network-wide mDNS discovery.
+        // The one subsequent GetCaps call verifies this exact endpoint before it can become ready.
+        if(driver==Driver.Escl&&Uri.TryCreate(saved.Id,UriKind.Absolute,out var endpoint)&&endpoint.Scheme is "http" or "https")return saved;
+        await gate.WaitAsync(ct);
+        try
+        {
+            using var context=CreateContext();var options=new ScanOptions{Driver=driver,TwainOptions=new(){Dsm=saved.Twain64?TwainDsm.NewX64:TwainDsm.New}};
+            await foreach(var device in new ScanController(context).GetDevices(options,ct))
+            {
+                ct.ThrowIfCancellationRequested();
+                if(string.Equals(device.ID,saved.Id,StringComparison.Ordinal))return new($"{driver}|{saved.Twain64}|{device.ID}",device.Name,driver.ToString(),device.ID,saved.Twain64);
+            }
+            return null;
+        }
+        finally{gate.Release();}
     }
     private ScanningContext CreateContext(string? work=null)
     {

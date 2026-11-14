@@ -1,4 +1,6 @@
 using System.IO;
+using System.Diagnostics;
+using System.Windows.Threading;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -34,10 +36,11 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     private string profileName="";public string ProfileName{get=>profileName;set=>Set(ref profileName,value);}
     public string Endpoint{get;set;}="";
     private DeviceInfo? selectedDevice;
+    private bool scannerAvailable;
     public DeviceInfo? SelectedDevice
     {
         get=>selectedDevice;
-        set {if(Set(ref selectedDevice,value)){Changed(nameof(DeviceDetails));if(!Busy&&value!=null)_=Operation(LoadCapabilities);}}
+        set {if(!changingDevices&&Set(ref selectedDevice,value)){scannerAvailable=false;Changed(nameof(DeviceDetails));if(!Busy&&value!=null)_=Operation(LoadCapabilities);}}
     }
     public string DeviceDetails=>SelectedDevice==null?"":$"{SelectedDevice.Driver}\n{SelectedDevice.Id}";
     private bool busy;
@@ -70,6 +73,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     public Func<nint> WindowHandle{get;set;}=()=>0;
     public Action<IReadOnlyList<Guid>>? RestoreSelection{get;set;}
     public RelayCommand ManualCropCommand{get;}public RelayCommand AutoColorCommand{get;}public RelayCommand ResetColorCommand{get;}
+    public RelayCommand ResetProfileCommand{get;}
     public RelayCommand RefreshCommand{get;}public RelayCommand ScanCommand{get;}public RelayCommand CancelCommand{get;}
     public RelayCommand SaveCommand{get;}public RelayCommand DeleteCommand{get;}public RelayCommand ClearCommand{get;}
     public RelayCommand UndoCommand{get;}public RelayCommand RotateLeftCommand{get;}public RelayCommand RotateRightCommand{get;}public RelayCommand Rotate180Command{get;}
@@ -85,8 +89,9 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         };
         settings=settingsStore.Load();ApplySettings(settings.Scan);
         PropertyChanged+=(_,e)=>{if(e.PropertyName!=nameof(ProfileState))Changed(nameof(ProfileState));};foreach(var p in settings.Profiles)Profiles.Add(p);
-        RefreshCommand=Command(()=>_=Operation(RefreshDevices));
-        ScanCommand=Command(()=>_=Operation(Scan),()=>NotBusy&&SelectedDevice!=null);
+        ResetProfileCommand=Command(()=>_=Operation(ResetProfileAndDiscover));
+        RefreshCommand=ResetProfileCommand;
+        ScanCommand=Command(()=>_=Operation(Scan),()=>NotBusy&&SelectedDevice!=null&&scannerAvailable);
         CancelCommand=Command(()=>{cancellation?.Cancel();Status=Text.Get("Working");},()=>Busy&&cancellation is {IsCancellationRequested:false});
         SaveCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Local)),()=>NotBusy&&selection.Count>0);
         SendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Erp)),()=>NotBusy&&selection.Count>0);
@@ -120,18 +125,46 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     private void RaiseCommands(){foreach(var cmd in commands)cmd.Raise();}
     public void NotifyProfileChanged()=>RaiseCommands();
     private bool Confirm(string key)=>MessageBox.Show(Text.Get(key),Text.Get("Title"),MessageBoxButton.YesNo,MessageBoxImage.Question)==MessageBoxResult.Yes;
-    public async Task InitializeAsync()
+    private Task? initializationTask;
+    private bool changingDevices;
+    public Task InitializeAsync()=>initializationTask??=InitializeCoreAsync();
+    private async Task InitializeCoreAsync()
     {
-        if(settingsStore.LoadWarning!=null)MessageBox.Show(settingsStore.LoadWarning,Text.Get("ConfigWarning"));
-        foreach(var recovered in store.Recoverable())
+        long started=Stopwatch.GetTimestamp();
+        try
         {
-            var answer=MessageBox.Show($"{Text.Get("RecoveryPrompt")}\n\n{recovered.Pages.Count} {Text.Get("Pages")} · {recovered.Updated.LocalDateTime:g}",Text.Get("Recover"),MessageBoxButton.YesNoCancel,MessageBoxImage.Question);
-            if(answer==MessageBoxResult.Yes){session=new(recovered.Id);session.Restore(recovered.Pages);RefreshPages();break;}
-            if(answer==MessageBoxResult.No)store.Delete(recovered.Id);else break;
+            await Operation(async()=>
+            {
+                // Mark startup busy before yielding, but let WPF paint before file/driver work.
+                await Dispatcher.Yield(DispatcherPriority.Background);
+                if(settingsStore.LoadWarning!=null)MessageBox.Show(settingsStore.LoadWarning,Text.Get("ConfigWarning"));
+                long recoveryStarted=Stopwatch.GetTimestamp();
+                var recoverable=await Task.Run(()=>store.Recoverable(),Token);
+                log.LogInformation("Startup recovery inspection elapsed_ms={Elapsed}",Stopwatch.GetElapsedTime(recoveryStarted).TotalMilliseconds);
+                foreach(var recovered in recoverable)
+                {
+                    var answer=MessageBox.Show($"{Text.Get("RecoveryPrompt")}\n\n{recovered.Pages.Count} {Text.Get("Pages")} · {recovered.Updated.LocalDateTime:g}",Text.Get("Recover"),MessageBoxButton.YesNoCancel,MessageBoxImage.Question);
+                    if(answer==MessageBoxResult.Yes){session=new(recovered.Id);session.Restore(recovered.Pages);RefreshPages();break;}
+                    if(answer==MessageBoxResult.No)await Task.Run(()=>store.Delete(recovered.Id),Token);else break;
+                }
+                var plan=StartupDiscoveryPlan.Create(Profiles.ToList(),settings.DefaultProfileId);
+                log.LogInformation("Startup discovery mode={Mode}",plan.Mode);
+                switch(plan.Mode)
+                {
+                    case StartupDiscoveryMode.DiscoverAll:await RefreshDevices();break;
+                    case StartupDiscoveryMode.LoadDefaultProfile:
+                        selectedProfile=plan.Profile;Changed(nameof(SelectedProfile));await LoadProfile();break;
+                    default:Status="Choose a saved profile, or use Reset Profile to search all devices.";break;
+                }
+            });
         }
-        await Operation(RefreshDevices);
-        if(settings.DefaultProfileId is {} id&&Profiles.FirstOrDefault(p=>p.Id==id) is {} profile){selectedProfile=profile;Changed(nameof(SelectedProfile));await Operation(LoadProfile);}
-        initialized=true;
+        finally{initialized=true;log.LogInformation("Startup completed elapsed_ms={Elapsed}",Stopwatch.GetElapsedTime(started).TotalMilliseconds);}
+    }
+    private async Task ResetProfileAndDiscover()
+    {
+        confirmation.Invalidate();activeProfile=null;selectedProfile=null;ProfileName="";
+        Changed(nameof(SelectedProfile));Changed(nameof(ProfileState));
+        await RefreshDevices();
     }
     private async Task Operation(Func<Task> action)
     {
@@ -150,27 +183,39 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     private CancellationToken Token=>cancellation?.Token??CancellationToken.None;
     private async Task RefreshDevices()
     {
-        Status=Text.Get("Initializing");var result=await StaTask.Run(()=>scanner.DiscoverAsync(Token));
-        var prior=SelectedDevice?.Key??settings.LastDeviceKey??settings.DefaultDeviceKey;
-        Devices.Clear();foreach(var d in result.Devices.Concat(settings.ManualDevices).DistinctBy(d=>d.Key))Devices.Add(d);
-        SelectedDevice=Devices.FirstOrDefault(d=>d.Key==prior)??Devices.FirstOrDefault(d=>d.Key==settings.DefaultDeviceKey)??Devices.FirstOrDefault();
+        // Only first use and explicit Reset/Refresh use all discovery backends.
+        Status="Discovering all scanner interfaces…";long started=Stopwatch.GetTimestamp();
+        string? prior=SelectedDevice?.Key??settings.LastDeviceKey??settings.DefaultDeviceKey;
+        changingDevices=true;
+        try{selectedDevice=null;scannerAvailable=false;capabilities=null;Devices.Clear();Changed(nameof(SelectedDevice));Changed(nameof(DeviceDetails));}
+        finally{changingDevices=false;}
+        var result=await StaTask.Run(()=>scanner.DiscoverAsync(Token));
+        changingDevices=true;
+        try
+        {
+            foreach(var d in result.Devices.Concat(settings.ManualDevices).DistinctBy(d=>d.Key))Devices.Add(d);
+            selectedDevice=Devices.FirstOrDefault(d=>d.Key==prior)??Devices.FirstOrDefault(d=>d.Key==settings.DefaultDeviceKey)??Devices.FirstOrDefault();
+            Changed(nameof(SelectedDevice));Changed(nameof(DeviceDetails));
+        }
+        finally{changingDevices=false;}
         if(SelectedDevice!=null)await LoadCapabilities();
-        Status=Devices.Count==0?Text.Get("NoScanner"):Text.Get("Ready");
+        if(Devices.Count==0)Status=Text.Get("NoScanner");
         if(result.Warnings.Count>0){CapabilityWarning=string.Join("\n",result.Warnings);log.LogWarning("One or more scanner backends unavailable");}
-        log.LogInformation("Discovery complete: {Count} entries",Devices.Count);
+        log.LogInformation("Full discovery completed backends_result_count={Count} elapsed_ms={Elapsed}",Devices.Count,Stopwatch.GetElapsedTime(started).TotalMilliseconds);
     }
     private Task LoadCapabilities()=>LoadCapabilities(CurrentSettings());
     private async Task LoadCapabilities(ScanSettings requested)
     {
         if(SelectedDevice==null)return;
         // Capture the saved values before awaiting the driver or changing any ItemsSource.
-        requested.Validate();var device=SelectedDevice;Status=Text.Get("Initializing");
-        try{capabilities=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(device,Token));}
+        requested.Validate();var device=SelectedDevice;Status="Checking selected scanner capabilities…";long started=Stopwatch.GetTimestamp();
+        try{scannerAvailable=false;capabilities=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(device,Token));Token.ThrowIfCancellationRequested();scannerAvailable=true;}
         catch(OperationCanceledException){throw;}
         catch(Exception ex){log.LogWarning(ex,"Capability query failed");capabilities=new([],false,Text.Get("NativeNotice"));}
         ApplySettings(requested);
         UpdateCapabilityWarning();
-        settings=settings with{LastDeviceKey=device.Key};PersistSettings();Status=Text.Get("Ready");
+        settings=settings with{LastDeviceKey=device.Key};PersistSettings();Status=!scannerAvailable?"Selected scanner could not be verified. Check the connection or select another device.":capabilities?.Known==true?Text.Get("Ready"):"Scanner responded; capabilities are unverified. Explicit native-dialog handling is required.";
+        log.LogInformation("Selected scanner capability check elapsed_ms={Elapsed}",Stopwatch.GetElapsedTime(started).TotalMilliseconds);
     }
     private void UpdateCapabilityWarning()=>CapabilityWarning=string.Join("\n",new[]{capabilities?.Warning}.Where(w=>!string.IsNullOrWhiteSpace(w)).Concat(scanSelection.Warnings));
     private ScanSettings CurrentSettings()=>new(){Source=Source,Dpi=Dpi,Color=Color,Paper=Paper,Landscape=Landscape,Deskew=Deskew,AutoCrop=AutoCrop,DetectBlank=DetectBlank,RemoveBlank=RemoveBlank,NativeUi=NativeUi,Brightness=Brightness,Contrast=Contrast};
@@ -284,9 +329,10 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     {
         if(SelectedProfile is not {} profile)return;
         ProfileValidation.Validate(profile);
-        var device=Devices.FirstOrDefault(d=>d.Key==profile.Device.Key&&d.Driver==profile.Device.Driver);
-        if(device==null)throw new InvalidOperationException("Saved scanner/driver is unavailable. Active settings are unchanged. Discover/connect the device or explicitly edit the profile.");
-        var caps=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(device,Token));
+        Status="Finding the profile scanner only…";
+        var prepared=await StaTask.Run(()=>new ScannerPreparation(scanner).PrepareProfileAsync(profile,Token));
+        var device=prepared.Device;var caps=prepared.Capabilities;
+        log.LogInformation("Profile scanner preparation find_ms={Find} capabilities_ms={Caps}",prepared.FindMilliseconds,prepared.CapabilitiesMilliseconds);
         var issues=ProfileValidation.CapabilityIssues(profile.Settings,caps);var requested=profile.Settings;
         if(issues.Count>0){
             if(!ProfileValidation.OnlyUnknown(issues))throw new InvalidOperationException(string.Join("\n",issues)+"\nNo settings were applied. Edit the profile to select supported values.");
@@ -294,10 +340,17 @@ public sealed partial class MainViewModel : Bindable,IDisposable
             requested=requested with{NativeUi=true};
         }
         // Commit UI + engine snapshot only after capability validation. Unknown capability native workflow preserves requested values.
-        selectedDevice=device;Changed(nameof(SelectedDevice));Changed(nameof(DeviceDetails));capabilities=caps;
+        changingDevices=true;
+        try
+        {
+            var prior=Devices.FirstOrDefault(d=>d.Key==device.Key);if(prior!=null&&prior!=device)Devices.Remove(prior);if(!Devices.Contains(device))Devices.Add(device);
+            selectedDevice=device;Changed(nameof(SelectedDevice));Changed(nameof(DeviceDetails));
+        }
+        finally{changingDevices=false;}
+        capabilities=caps;
         if(issues.Count>0)capabilities=null;
         ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};foreach(string property in new[]{nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
-        activeProfile=profile;ProfileName=profile.Name;confirmation.Invalidate();PersistSettings();Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
+        activeProfile=profile;ProfileName=profile.Name;confirmation.Invalidate();settings=settings with{LastDeviceKey=device.Key};PersistSettings();scannerAvailable=true;Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
     }
     private void DeleteProfile(){if(SelectedProfile is {} p&&Confirm("ProfileConfirm")){Profiles.Remove(p);SelectedProfile=null;Changed(nameof(SelectedProfile));PersistSettings();}}
     private async Task ImportImages()

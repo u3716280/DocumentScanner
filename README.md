@@ -1,4 +1,4 @@
-# Document Scanner 1.1.0 — validation candidate
+# Document Scanner 1.1.1 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
@@ -43,7 +43,7 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 ./build/Publish.ps1 -Runtime win-x86
 ```
 
-Output: `artifacts/DocumentScanner-v1.1.0-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
+Output: `artifacts/DocumentScanner-v1.1.1-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`; upload this source tree to the desired repository, then run **Windows portable build** from Actions. Repository: https://github.com/u3716280/DocumentScanner. The workflow runs on pushes to main; hardware testing still requires a physical scanner.
 
@@ -105,3 +105,16 @@ Manage profiles supports Create, Save, Save As, Rename, Delete, Default and JSON
 Save Local exports selected pages only. Send to ERPNext needs no permanent local output folder. The combined action completes local copies before upload, retains successes and journals per-file outcomes for retry. In-app search shows real document details and requires separate Confirm destination and Send now actions. A new/recovered session starts unconfirmed. API credentials are held in Windows Credential Manager, outside profile JSON.
 
 **ERPNext prerequisite:** install the companion `document_scanner_bridge` on an authorized staging site first. Source is under `integrations/document_scanner_bridge`; CI packages it as `DocumentScanner-ERPNext-Bridge-v1.1.0.zip`. See [setup and limitations](docs/ERPNext-Setup.md). The build does not deploy this app, configure credentials or establish live-site/hardware compatibility. The bridge contract tests use isolated fakes, not a running Frappe/Redis/database stack.
+
+## Faster initialization policy (1.1.1)
+
+- First launch with no saved scanner profiles discovers all configured backends (WIA, TWAIN, eSCL and TWAIN 64-bit when running x64).
+- A valid Default Profile probes its exact device/driver first, then reads capabilities once and applies validated values. It does not wait for unrelated backend discovery.
+- Saved profiles without a valid default wait for a profile selection or Reset Profile; no scanner backend is queried automatically in this case.
+- Loading any profile performs targeted discovery even if that device has never appeared in the current device list. Device ID, driver and TWAIN architecture must match. A URL-based eSCL profile contacts that endpoint through the capability check instead of network-wide discovery.
+- **Reset Profile** (also F5) clears only the active profile/destination confirmation and runs a full search. Saved profiles, the configured Default Profile, page edits, original scans and delivery journals are retained. The saved default is used again on the next launch.
+- Missing/offline profile devices do not trigger an automatic full search or fallback to another scanner/settings. A failed capability probe is not labeled Ready. Unknown capabilities still require explicit native-dialog handling.
+
+The first window frame is yielded before recovery/driver work; session inspection runs off the UI thread. Scan operations remain serialized with discovery. There is no parallel driver access or forced native-driver timeout. Fresh validation before an actual scan remains in place.
+
+Logs now record startup policy, total/recovery duration, each full-search backend duration, and targeted lookup/capability durations in milliseconds, without device IDs/endpoints or document contents. Total startup may include user recovery-dialog time. Reduced discovery/capability call counts are covered by automated tests; no measured wall-clock speedup on the user's hardware is claimed.

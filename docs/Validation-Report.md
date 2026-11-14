@@ -41,3 +41,7 @@ Output operates on selected pages. Local-only saving is independent of ERPNext. 
 - Windows Credential Manager setup under the actual user's account and portability to another Windows account/PC.
 
 No production site, live API credentials or real ERPNext records were used. Do not interpret fake transport/bridge tests as a production exactly-once or compatibility guarantee. See [ERPNext setup](ERPNext-Setup.md), [hardware checklist](Hardware-Tests.md) and [known limitations](Known-Limitations.md).
+
+## 1.1.1 startup optimization candidate
+
+Local cross-build and unit checks are in progress; Windows CI evidence will be updated after completion. New tests cover first use, default-profile startup, no/stale default, explicit profile loading, Reset Profile, exact identity, failed lookups and cancellation. Hardware cold/warm startup timing has not been benchmarked. The ERPNext bridge source remains 1.1.0.

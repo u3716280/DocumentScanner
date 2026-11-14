@@ -99,6 +99,7 @@ public sealed record ExportResult(IReadOnlyList<string> Saved, string? Error, bo
 public interface IScannerService : IDisposable
 {
     Task<(IReadOnlyList<DeviceInfo> Devices, IReadOnlyList<string> Warnings)> DiscoverAsync(CancellationToken ct);
+    Task<DeviceInfo?> FindDeviceAsync(DeviceInfo saved, CancellationToken ct);
     Task<ScannerCapabilities> GetCapabilitiesAsync(DeviceInfo device, CancellationToken ct);
     Task<DeviceInfo> ConnectEndpointAsync(string endpoint, CancellationToken ct);
     Task ScanAsync(DeviceInfo device, ScanSettings settings, string sessionFolder, Func<PageData,Task> acquired,
