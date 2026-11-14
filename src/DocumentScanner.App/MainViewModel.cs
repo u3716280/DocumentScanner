@@ -68,6 +68,7 @@ public sealed class MainViewModel : Bindable,IDisposable
     private ScannerCapabilities? capabilities;
     public Func<nint> WindowHandle{get;set;}=()=>0;
     public Action<IReadOnlyList<Guid>>? RestoreSelection{get;set;}
+    public RelayCommand ManualCropCommand{get;}public RelayCommand AutoColorCommand{get;}public RelayCommand ResetColorCommand{get;}
     public RelayCommand RefreshCommand{get;}public RelayCommand ScanCommand{get;}public RelayCommand CancelCommand{get;}
     public RelayCommand SaveCommand{get;}public RelayCommand DeleteCommand{get;}public RelayCommand ClearCommand{get;}
     public RelayCommand UndoCommand{get;}public RelayCommand RotateLeftCommand{get;}public RelayCommand RotateRightCommand{get;}public RelayCommand Rotate180Command{get;}
@@ -94,6 +95,9 @@ public sealed class MainViewModel : Bindable,IDisposable
         Rotate180Command=Command(()=>Edit(()=>session.Rotate(selection,180)),()=>NotBusy&&selection.Count>0);
         MoveUpCommand=Command(()=>Move(-1),()=>NotBusy&&selection.Count>0);
         MoveDownCommand=Command(()=>Move(1),()=>NotBusy&&selection.Count>0);
+        ManualCropCommand=Command(()=>_=Operation(ManualCrop),()=>NotBusy&&selection.Count==1);
+        AutoColorCommand=Command(()=>Edit(()=>session.SetAutoColor(selection,true)),()=>NotBusy&&selection.Count>0);
+        ResetColorCommand=Command(()=>Edit(()=>session.SetAutoColor(selection,false)),()=>NotBusy&&selection.Count>0);
         CropCommand=Command(()=>Edit(()=>session.SetCrop(selection,true)),()=>NotBusy&&selection.Count>0);
         ResetCropCommand=Command(()=>Edit(()=>session.SetCrop(selection,false)),()=>NotBusy&&selection.Count>0);
         ConnectCommand=Command(()=>_=Operation(Connect));
@@ -227,10 +231,22 @@ public sealed class MainViewModel : Bindable,IDisposable
             if(version==previewVersion)
             {
                 Preview=rendered.Image;
-                PreviewInfo=$"{rendered.Width} × {rendered.Height} px · "+(data.AutoCrop?Text.Get(rendered.CropChanged?"CropApplied":"CropUnchanged"):Text.Get("OriginalImage"))+$" · B {data.Brightness:+0;-0;0}, C {data.Contrast:+0;-0;0}";
+                PreviewInfo=$"{rendered.Width} × {rendered.Height} px · "+(data.ManualCrop!=null?Text.Get("ManualCrop"):data.AutoCrop?Text.Get(rendered.CropChanged?"CropApplied":"CropUnchanged"):Text.Get("OriginalImage"))+(data.AutoColorCorrection?" · "+Text.Get("AutoColor"):"")+$" · B {data.Brightness:+0;-0;0}, C {data.Contrast:+0;-0;0}";
             }
         }catch(Exception ex){log.LogWarning(ex,"Preview failed");Status="Unable to preview this page; the original is preserved.";}
         finally{previewGate.Release();}
+    }
+    private async Task ManualCrop()
+    {
+        var page=session.Pages.SingleOrDefault(p=>selection.Contains(p.Id));if(page==null)return;
+        // Display the full oriented original so recropping can restore previously trimmed edges.
+        var image=await StaTask.Run(()=>Task.FromResult(Imaging.Render(page with{AutoCrop=false,ManualCrop=null},store.Folder(session.Id),1600)));
+        var dialog=new CropWindow(image){Owner=Application.Current.MainWindow};
+        if(dialog.ShowDialog()==true&&dialog.Selection is {} bounds)
+        {
+            session.SetManualCrop(page.Id,NormalizedCrop.FromView(bounds,page.Rotation));
+            store.Save(session);RefreshPages();
+        }
     }
     private async Task Save()
     {

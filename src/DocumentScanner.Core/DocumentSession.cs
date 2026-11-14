@@ -32,7 +32,17 @@ public sealed class DocumentSession
         var set=ids.ToHashSet(); if(!pages.Any(p=>set.Contains(p.Id)))return; Checkpoint();
         pages=pages.Select(p=>set.Contains(p.Id)?p with { Rotation=((p.Rotation+degrees)%360+360)%360 }:p).ToList();
     }
-    public void SetCrop(IEnumerable<Guid> ids, bool crop) { var set=ids.ToHashSet(); if(!pages.Any(p=>set.Contains(p.Id)&&p.AutoCrop!=crop))return; Checkpoint(); pages=pages.Select(p=>set.Contains(p.Id)?p with {AutoCrop=crop}:p).ToList(); }
+    public void SetCrop(IEnumerable<Guid> ids, bool crop) { var set=ids.ToHashSet(); if(!pages.Any(p=>set.Contains(p.Id)&&(p.AutoCrop!=crop||p.ManualCrop!=null)))return; Checkpoint(); pages=pages.Select(p=>set.Contains(p.Id)?p with {AutoCrop=crop,ManualCrop=null}:p).ToList(); }
+    public void SetManualCrop(Guid id, NormalizedCrop crop)
+    {
+        crop.Validate();if(!pages.Any(p=>p.Id==id))return;Checkpoint();
+        pages=pages.Select(p=>p.Id==id?p with{ManualCrop=crop,AutoCrop=false}:p).ToList();
+    }
+    public void SetAutoColor(IEnumerable<Guid> ids,bool enabled)
+    {
+        var set=ids.ToHashSet();if(!pages.Any(p=>set.Contains(p.Id)&&p.AutoColorCorrection!=enabled))return;
+        Checkpoint();pages=pages.Select(p=>set.Contains(p.Id)?p with{AutoColorCorrection=enabled}:p).ToList();
+    }
     public void Move(IEnumerable<Guid> ids, int targetIndex)
     {
         var set=ids.ToHashSet(); var moving=pages.Where(p=>set.Contains(p.Id)).ToList();

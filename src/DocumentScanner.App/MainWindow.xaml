@@ -35,7 +35,7 @@
    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
     <Button Content="{l:Loc RotateLeft}" Command="{Binding RotateLeftCommand}"/><Button Content="{l:Loc RotateRight}" Command="{Binding RotateRightCommand}"/><Button Content="{l:Loc Rotate180}" Command="{Binding Rotate180Command}"/>
     <Button Content="{l:Loc MoveUp}" Command="{Binding MoveUpCommand}"/><Button Content="{l:Loc MoveDown}" Command="{Binding MoveDownCommand}"/><Button Content="{l:Loc Delete}" Command="{Binding DeleteCommand}"/>
-    <Button Content="{l:Loc Undo}" Command="{Binding UndoCommand}"/><Button Content="{l:Loc Crop}" Command="{Binding CropCommand}"/><Button Content="{l:Loc ResetCrop}" Command="{Binding ResetCropCommand}"/><Button Content="{l:Loc Clear}" Command="{Binding ClearCommand}"/>
+    <Button Content="{l:Loc ManualCrop}" Command="{Binding ManualCropCommand}"/><Button Content="{l:Loc AutoColor}" Command="{Binding AutoColorCommand}"/><Button Content="{l:Loc ResetColor}" Command="{Binding ResetColorCommand}"/><Button Content="{l:Loc Undo}" Command="{Binding UndoCommand}"/><Button Content="{l:Loc Crop}" Command="{Binding CropCommand}"/><Button Content="{l:Loc ResetCrop}" Command="{Binding ResetCropCommand}"/><Button Content="{l:Loc Clear}" Command="{Binding ClearCommand}"/>
    </WrapPanel>
    <TextBlock DockPanel.Dock="Bottom" Text="{Binding PreviewInfo}" HorizontalAlignment="Center" Foreground="#52627C" Margin="0,6"/>
    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,7,0,0"><Button Content="{l:Loc ZoomOut}" Click="ZoomOutClick"/><Button Content="{l:Loc Fit}" Click="FitClick"/><Button Content="{l:Loc ZoomIn}" Click="ZoomInClick"/></StackPanel>

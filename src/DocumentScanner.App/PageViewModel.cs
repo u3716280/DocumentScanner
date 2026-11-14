@@ -22,7 +22,7 @@ public sealed class PageViewModel(PageData data,int number,string folder) : Bind
         await thumbnailGate.WaitAsync();
         try
         {
-            thumbnail=await StaTask.Run(()=>Task.FromResult(data.AutoCrop||data.Brightness!=0||data.Contrast!=0
+            thumbnail=await StaTask.Run(()=>Task.FromResult(data.AutoCrop||data.ManualCrop!=null||data.AutoColorCorrection||data.Brightness!=0||data.Contrast!=0
                 ?Imaging.Render(data with{Rotation=0},folder,180)
                 :Imaging.Load(SessionStore.Resolve(folder,data.ThumbnailFile),180)));
             Changed(nameof(Thumbnail));

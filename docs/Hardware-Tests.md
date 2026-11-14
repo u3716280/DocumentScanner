@@ -32,3 +32,9 @@ When testing HP Smart Tank 615 or another multifunction printer, record capabili
 No real scanner, Windows desktop, jam, duplex, or clean-machine test has been performed in the Linux authoring environment.
 
 Repeat-scan tone regression (v1.0.3): reset app Brightness/Contrast to 0; keep device/source/DPI/color settings fixed; disable the native driver dialog for a controlled test; scan the same test chart with Auto Crop off/on/on/off. Record preview and saved PNG colors, selected-page B/C values, driver type/model and whether hardware auto-exposure is active. Repeat with a nonzero app level and confirm the level is not accumulated across preview, crop toggles or export. Synthetic CI checks verify retained-pixel equality from the same input; physical acquisition may vary and is not covered by those checks.
+
+## v1.0.4 editing smoke test (pending interactive Windows run)
+
+- Import a non-square test page; rotate it 0/90/180/270 degrees. Open Manual Crop and select an asymmetric region. Verify the exact region in preview, thumbnail and PNG/JPG/PDF. Reopen crop to recover discarded edges; verify Cancel, reverse dragging, pointer clamping at image edges, Escape and resize selection reset.
+- Verify Manual Crop requires one selected page; Auto Color and Reset Auto Color operate on all selected pages. Test Reset crop, Undo, session recovery and export after edits.
+- Compare tinted paper with black text, grayscale pages, photographs and colored paper. Confirm white balance is useful for the document, inspect clipping, reset, and repeat correction/export to ensure it does not accumulate.

@@ -65,6 +65,8 @@ public sealed record PageData
     public double DpiY { get; init; } = 300;
     public int Rotation { get; init; }
     public bool AutoCrop { get; init; }
+    public NormalizedCrop? ManualCrop { get; init; }
+    public bool AutoColorCorrection { get; init; }
     public bool BlankCandidate { get; init; }
     public int Brightness { get; init; }
     public int Contrast { get; init; }

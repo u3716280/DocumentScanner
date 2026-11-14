@@ -61,18 +61,37 @@ public static class Imaging
         var result=BitmapSource.Create(rgba.PixelWidth,rgba.PixelHeight,rgba.DpiX,rgba.DpiY,PixelFormats.Bgra32,null,pixels,stride);
         result.Freeze();return result;
     }
+    public static BitmapSource ApplyAutoColor(BitmapSource image)
+    {
+        var rgba=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);
+        int stride=rgba.PixelWidth*4;byte[] pixels=new byte[stride*rgba.PixelHeight];rgba.CopyPixels(pixels,stride,0);
+        DocumentColorCorrection.Apply(pixels);
+        var result=BitmapSource.Create(rgba.PixelWidth,rgba.PixelHeight,rgba.DpiX,rgba.DpiY,PixelFormats.Bgra32,null,pixels,stride);
+        result.Freeze();return result;
+    }
     public sealed record RenderedPage(BitmapSource Image,int Width,int Height,bool CropChanged);
     public static BitmapSource Render(PageData page,string folder,int previewWidth=0)=>RenderDetails(page,folder,previewWidth).Image;
     public static RenderedPage RenderDetails(PageData page,string folder,int previewWidth=0)
     {
         BitmapSource bitmap=Load(SessionStore.Resolve(folder,page.OriginalFile));bool cropChanged=false;
-        if(page.AutoCrop)
+        if(page.ManualCrop is {} crop)
+        {
+            crop.Validate();
+            int x=Math.Clamp((int)Math.Floor(crop.X*bitmap.PixelWidth),0,bitmap.PixelWidth-1);
+            int y=Math.Clamp((int)Math.Floor(crop.Y*bitmap.PixelHeight),0,bitmap.PixelHeight-1);
+            int right=Math.Clamp((int)Math.Ceiling((crop.X+crop.Width)*bitmap.PixelWidth),x+1,bitmap.PixelWidth);
+            int bottom=Math.Clamp((int)Math.Ceiling((crop.Y+crop.Height)*bitmap.PixelHeight),y+1,bitmap.PixelHeight);
+            cropChanged=x!=0||y!=0||right!=bitmap.PixelWidth||bottom!=bitmap.PixelHeight;
+            bitmap=new CroppedBitmap(bitmap,new(x,y,right-x,bottom-y));
+        }
+        else if(page.AutoCrop)
         {
             var bounds=Analyze(bitmap).Bounds;
             cropChanged=bounds.Width!=bitmap.PixelWidth||bounds.Height!=bitmap.PixelHeight;
             if(cropChanged)bitmap=new CroppedBitmap(bitmap,bounds);
         }
         if(page.Rotation!=0)bitmap=new TransformedBitmap(bitmap,new RotateTransform(page.Rotation));
+        if(page.AutoColorCorrection)bitmap=ApplyAutoColor(bitmap);
         bitmap=ApplyTone(bitmap,page.Brightness,page.Contrast);
         int width=bitmap.PixelWidth,height=bitmap.PixelHeight;
         if(previewWidth>0)bitmap=Thumbnail(bitmap,previewWidth);

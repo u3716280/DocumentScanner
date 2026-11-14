@@ -63,3 +63,7 @@ The user's report identifies darkening in both preview and saved output; its phy
 ## Windows tone regression result — v1.0.3
 
 Build run 43586676124 passed: 73/73 unit cases, 15/15 Windows integration cases, x64 and x86 publish, package verification and artifact upload. Neutral tone/crop processing retained every tested pixel byte; nonzero brightness stayed at one application across repeated crop toggles and PNG exports. Fresh WIA/TWAIN/eSCL option objects requested neutral acquisition tone, and the WPF slider/readout/reset bindings stayed synchronized. These are deterministic synthetic-input and configuration tests; no physical scanner reproduction or guarantee is implied.
+
+## v1.0.4 manual crop / auto color validation
+
+Cross-build: passed with no warnings/errors. Unit tests: 81 passed locally. Windows CI for this revision is pending at source submission. Five new Windows cases cover manual-crop pixel identity and PNG export at all four rotations plus repeatable auto-color preview/export/reset. Interactive mouse/dialog smoke tests remain pending; see Hardware-Tests.md.

@@ -1,3 +1,11 @@
+# 1.0.4 — Manual crop and document auto color
+
+- Add a drag-to-select Manual Crop dialog for one page, using full oriented originals and normalized original-image coordinates.
+- Persist crop and auto color edits in session manifests, with Undo and explicit reset actions.
+- Add conservative document white balance/levels to selected pages, rendered once from original pixels across preview, thumbnails and export.
+- Keep old sessions compatible: manual crop defaults to null and auto color defaults to false.
+- Add coordinate, persistence, undo, alpha/dark-image, rotated crop/export and repeated color/export regression coverage. Physical scanner and interactive Windows mouse smoke tests remain pending.
+
 # 1.0.3 — Visible tone values and repeat-scan color isolation
 
 - Live integer Brightness/Contrast values, thumb tooltips and a reset-to-zero button.
