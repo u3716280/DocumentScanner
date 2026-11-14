@@ -1,6 +1,6 @@
 # Validation report — 14 November 2026
 
-Status: **Windows CI passed; physical scanner and full manual application acceptance pending.**
+Status: **v1.0.3 tone correction: local build/unit checks complete; new Windows CI pending. Physical scanner acceptance remains pending.**
 
 Current Windows evidence: https://github.com/u3716280/DocumentScanner/actions/runs/43581943815 (code commit 4afc14d6655e8b1c86b59f724c6bb54b8a2bbb9a). Earlier authoring notes below describe Linux-only checks before this run.
 
@@ -53,3 +53,9 @@ A Windows-only test uses actual WPF ComboBoxes with two-way bindings and dispatc
 Windows portable build #1 succeeded on the unmodified v1.0.2 application source: 60/60 unit tests and 9/9 integration tests passed. The integration run includes actual WPF two-way ComboBox bindings with repeated profile restoration, PNG/JPG/PDF crop consistency, image orientation, PDF page size/order, blank-page handling and cancelled export. Both win-x64 and win-x86 self-contained packages, inventories and checksums were created and uploaded as the DocumentScanner-portable artifact. This supersedes the earlier compile-only Windows-test notes.
 
 No physical scanner, native scanner dialog, full application interaction, clean-machine no-.NET deployment or 100-page hardware performance claim is made.
+
+## Tone correction — 1.0.3
+
+Local unit tests: 73 passed. The prior 60-unit/9-integration Windows evidence above belongs to v1.0.2. Six new Windows regression cases (15 total) exercise neutral crop retained-pixel identity, repeated export without accumulating a nonzero brightness level, neutral fresh scan options for WIA/TWAIN/eSCL, and live WPF slider/readout/reset bindings. They must pass in the new Windows CI run before claiming Windows validation of this change.
+
+The user's report identifies darkening in both preview and saved output; its physical device cause has not been reproduced here. Inspection found the earlier SDK-after-scan path skipped explicitly resetting WIA/TWAIN driver brightness/contrast. The new path resets supported non-native acquisition settings to neutral and applies app tone once as page metadata. No physical-device fix is claimed without a repeat scan on the user's scanner.

@@ -3,7 +3,7 @@
 - Hardware compatibility, full application UI, native scanner dialogs and clean Windows deployment require manual testing. WPF ComboBox bindings and image/PDF codecs passed the 9-test Windows CI integration suite; USB and network scanner hardware remain untested.
 - Capabilities may be incomplete or incorrect. Duplex/ADF availability follows reported capabilities. Unknown capabilities require native UI; the app does not claim automatic duplex support.
 - Auto paper uses maximum reported scan area, with A4 fallback. Content cropping is reversible and adapts to background brightness; it can also detect a light document on a dark platen. It is a heuristic, not a guarantee for every paper/background.
-- Brightness/contrast are SDK post-scan adjustments. Actual results and supported modes require validation per backend.
+- Brightness/contrast for new scans are per-page app adjustments, rendered once from the acquired original. Non-native WIA/TWAIN scans request neutral hardware values each time. A native scanner dialog can still apply its own adjustments; physical auto-exposure behavior requires device testing.
 - During scan/export/discovery, document edits and other scanner operations are disabled. Cancellation remains cooperative; a hung vendor driver can take time to return. Do not force-kill a driver while it is acquiring a page.
 - PDF cancellation does not interrupt the SDK writer immediately. The UI remains responsive, and cancelled output is not finalized.
 - No automatic correction of arbitrary vendor duplex order; test numbered front/back sheets. Page ordering can be corrected manually.

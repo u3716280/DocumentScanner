@@ -1,3 +1,15 @@
+# 1.0.3 — Visible tone values and repeat-scan color isolation
+
+- Live integer Brightness/Contrast values, thumb tooltips and a reset-to-zero button.
+- Integer setting notifications keep profile loads, sliders, and displayed values synchronized.
+- New scan options explicitly request neutral WIA/TWAIN driver brightness/contrast instead of leaving those properties unset in SDK post-processing mode. Native UI remains controlled by the scanner dialog.
+- Store the requested tone levels as per-page metadata and render them once from the immutable original. Auto Crop affects geometry only.
+- Use the same tone renderer for preview, cropped/adjusted thumbnails and export; zero is a true no-op.
+- Selected-page preview footer records the actual page B/C values.
+- Add 13 core tests (73 total) and 6 Windows regressions (15 total), including full retained-pixel comparisons across crop toggles and repeated PNG exports.
+
+Physical scanner repetition and device-native exposure behavior still require user verification.
+
 # 1.0.2 — Profile Save/Load fix
 
 - Preserve Paper Source, DPI, Color Mode and Paper Size across capability-list refreshes.

@@ -66,6 +66,8 @@ public sealed record PageData
     public int Rotation { get; init; }
     public bool AutoCrop { get; init; }
     public bool BlankCandidate { get; init; }
+    public int Brightness { get; init; }
+    public int Contrast { get; init; }
 }
 public sealed record SessionManifest(int SchemaVersion, Guid Id, DateTimeOffset Updated, List<PageData> Pages);
 public sealed record ExportOptions(string Folder, string BaseName, ExportFormat Format, int Quality = 90,

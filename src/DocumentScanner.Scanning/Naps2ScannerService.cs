@@ -82,9 +82,7 @@ public sealed class Naps2ScannerService : IScannerService
         settings.Validate();await gate.WaitAsync(ct);
         try {
             Directory.CreateDirectory(folder);using var context=CreateContext(Path.Combine(folder,"worker-temp"));
-            var options=Options(device);
-            options.PaperSource=settings.Source switch{ScanSource.Feeder=>PaperSource.Feeder,ScanSource.Duplex=>PaperSource.Duplex,_=>PaperSource.Flatbed};
-            options.Dpi=settings.Dpi;options.BitDepth=settings.Color switch{ScanColor.Grayscale=>BitDepth.Grayscale,ScanColor.BlackAndWhite=>BitDepth.BlackAndWhite,_=>BitDepth.Color};
+            var options=ScanOptionsFactory.Create(device,settings,handle);
             // Auto means maximum driver-reported scan area; it is not automatic document-edge detection.
             options.PageSize=settings.Paper=="Auto"?(await new ScanController(context).GetCaps(options,ct)).FlatbedCaps?.PageSizeCaps?.ScanArea??PageSize.A4:PageSize.Parse(settings.Paper);
             if(settings.Paper=="Auto"&&settings.Source!=ScanSource.Flatbed)
@@ -92,9 +90,6 @@ public sealed class Naps2ScannerService : IScannerService
                 var caps=await new ScanController(context).GetCaps(options,ct);
                 options.PageSize=(settings.Source==ScanSource.Duplex?caps.DuplexCaps:caps.FeederCaps)?.PageSizeCaps?.ScanArea??options.PageSize;
             }
-            options.AutoDeskew=settings.Deskew;options.MaxQuality=true;options.ExcludeBlankPages=false;
-            options.Brightness=settings.Brightness;options.Contrast=settings.Contrast;options.BrightnessContrastAfterScan=true;
-            options.UseNativeUI=settings.NativeUi;options.DialogParent=handle;
             int count=0;
             try {
                 await foreach(var image in new ScanController(context).Scan(options,ct))
@@ -110,6 +105,7 @@ public sealed class Naps2ScannerService : IScannerService
                         var page=new PageData{Id=id,OriginalFile=original,ThumbnailFile=thumb,Width=bitmap.PixelWidth,Height=bitmap.PixelHeight,
                             DpiX=bitmap.DpiX>0?bitmap.DpiX:settings.Dpi,DpiY=bitmap.DpiY>0?bitmap.DpiY:settings.Dpi,
                             Rotation=settings.Landscape&&bitmap.PixelHeight>bitmap.PixelWidth?90:0,AutoCrop=settings.AutoCrop,
+                            Brightness=settings.Brightness,Contrast=settings.Contrast,
                             BlankCandidate=settings.DetectBlank&&Imaging.Analyze(bitmap).Blank};
                         await acquired(page);count++;
                     }

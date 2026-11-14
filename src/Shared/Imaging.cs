@@ -46,6 +46,21 @@ public static class Imaging
         int y1=Math.Min(image.PixelHeight,(int)Math.Ceiling((b.Y+b.Height)*sy)+marginY);
         return(analysis.Blank,new(x0,y0,x1-x0,y1-y0));
     }
+    public static BitmapSource ApplyTone(BitmapSource image,int brightness,int contrast)
+    {
+        // Neutral means a true no-op: no conversion, gamma operation or re-encoding.
+        if(brightness==0&&contrast==0)return image;
+        var lookup=ImageTone.Lookup(brightness,contrast);
+        var rgba=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);
+        int stride=rgba.PixelWidth*4;byte[] pixels=new byte[stride*rgba.PixelHeight];rgba.CopyPixels(pixels,stride,0);
+        for(int i=0;i<pixels.Length;i+=4)
+        {
+            pixels[i]=lookup[pixels[i]];pixels[i+1]=lookup[pixels[i+1]];pixels[i+2]=lookup[pixels[i+2]];
+            // Alpha is retained, and the original BitmapSource/file is never modified.
+        }
+        var result=BitmapSource.Create(rgba.PixelWidth,rgba.PixelHeight,rgba.DpiX,rgba.DpiY,PixelFormats.Bgra32,null,pixels,stride);
+        result.Freeze();return result;
+    }
     public sealed record RenderedPage(BitmapSource Image,int Width,int Height,bool CropChanged);
     public static BitmapSource Render(PageData page,string folder,int previewWidth=0)=>RenderDetails(page,folder,previewWidth).Image;
     public static RenderedPage RenderDetails(PageData page,string folder,int previewWidth=0)
@@ -58,6 +73,7 @@ public static class Imaging
             if(cropChanged)bitmap=new CroppedBitmap(bitmap,bounds);
         }
         if(page.Rotation!=0)bitmap=new TransformedBitmap(bitmap,new RotateTransform(page.Rotation));
+        bitmap=ApplyTone(bitmap,page.Brightness,page.Contrast);
         int width=bitmap.PixelWidth,height=bitmap.PixelHeight;
         if(previewWidth>0)bitmap=Thumbnail(bitmap,previewWidth);
         bitmap.Freeze();return new(bitmap,width,height,cropChanged);

@@ -30,3 +30,5 @@ Record for each run: date, tester, Windows edition/build, OS/process architectur
 When testing HP Smart Tank 615 or another multifunction printer, record capabilities from its actual installed scanner driver. Never infer ADF/duplex from the printer's printing capabilities.
 
 No real scanner, Windows desktop, jam, duplex, or clean-machine test has been performed in the Linux authoring environment.
+
+Repeat-scan tone regression (v1.0.3): reset app Brightness/Contrast to 0; keep device/source/DPI/color settings fixed; disable the native driver dialog for a controlled test; scan the same test chart with Auto Crop off/on/on/off. Record preview and saved PNG colors, selected-page B/C values, driver type/model and whether hardware auto-exposure is active. Repeat with a nonzero app level and confirm the level is not accumulated across preview, crop toggles or export. Synthetic CI checks verify retained-pixel equality from the same input; physical acquisition may vary and is not covered by those checks.

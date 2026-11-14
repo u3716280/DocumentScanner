@@ -62,7 +62,9 @@ public sealed class MainViewModel : Bindable,IDisposable
         get=>autoCrop;
         set{if(Set(ref autoCrop,value)&&!applyingScanSettings&&NotBusy&&selection.Count>0)Edit(()=>session.SetCrop(selection,value));}
     }public bool DetectBlank{get;set;}public bool NativeUi{get;set;}
-    public double Brightness{get;set;}public double Contrast{get;set;}
+    private readonly ImageAdjustments adjustments=new();
+    public int Brightness{get=>adjustments.Brightness;set=>adjustments.Brightness=value;}
+    public int Contrast{get=>adjustments.Contrast;set=>adjustments.Contrast=value;}
     private ScannerCapabilities? capabilities;
     public Func<nint> WindowHandle{get;set;}=()=>0;
     public Action<IReadOnlyList<Guid>>? RestoreSelection{get;set;}
@@ -70,10 +72,11 @@ public sealed class MainViewModel : Bindable,IDisposable
     public RelayCommand SaveCommand{get;}public RelayCommand DeleteCommand{get;}public RelayCommand ClearCommand{get;}
     public RelayCommand UndoCommand{get;}public RelayCommand RotateLeftCommand{get;}public RelayCommand RotateRightCommand{get;}public RelayCommand Rotate180Command{get;}
     public RelayCommand MoveUpCommand{get;}public RelayCommand MoveDownCommand{get;}public RelayCommand CropCommand{get;}public RelayCommand ResetCropCommand{get;}
-    public RelayCommand ConnectCommand{get;}public RelayCommand SaveProfileCommand{get;}public RelayCommand LoadProfileCommand{get;}public RelayCommand DeleteProfileCommand{get;}public RelayCommand DefaultCommand{get;}public RelayCommand ImportCommand{get;}
+    public RelayCommand ConnectCommand{get;}public RelayCommand SaveProfileCommand{get;}public RelayCommand LoadProfileCommand{get;}public RelayCommand DeleteProfileCommand{get;}public RelayCommand DefaultCommand{get;}public RelayCommand ImportCommand{get;}public RelayCommand ResetAdjustmentsCommand{get;}
     public MainViewModel(IScannerService scanner,IDocumentExporter exporter,SettingsStore settingsStore,SessionStore store,ILogger<MainViewModel> logger)
     {
         this.scanner=scanner;this.exporter=exporter;this.settingsStore=settingsStore;this.store=store;log=logger;
+        adjustments.PropertyChanged+=(_,e)=>Changed(e.PropertyName);
         scanSelection.PropertyChanged+=(_,e)=>{
             Changed(e.PropertyName);
             if(e.PropertyName==nameof(ScanSettingsSelection.Warnings))UpdateCapabilityWarning();
@@ -98,6 +101,7 @@ public sealed class MainViewModel : Bindable,IDisposable
         LoadProfileCommand=Command(()=>_=Operation(LoadProfile),()=>NotBusy&&SelectedProfile!=null);
         DeleteProfileCommand=Command(()=>Edit(DeleteProfile),()=>NotBusy&&SelectedProfile!=null);
         DefaultCommand=Command(()=>Edit(()=>{settings=settings with{DefaultDeviceKey=SelectedDevice!.Key};PersistSettings();Status=Text.Get("DefaultSaved");}),()=>NotBusy&&SelectedDevice!=null);
+        ResetAdjustmentsCommand=Command(adjustments.Reset);
         ImportCommand=Command(()=>_=Operation(ImportImages));
     }
     private RelayCommand Command(Action action,Func<bool>? can=null){var result=new RelayCommand(action,can??(()=>NotBusy));commands.Add(result);return result;}
@@ -155,7 +159,7 @@ public sealed class MainViewModel : Bindable,IDisposable
         settings=settings with{LastDeviceKey=device.Key};PersistSettings();Status=Text.Get("Ready");
     }
     private void UpdateCapabilityWarning()=>CapabilityWarning=string.Join("\n",new[]{capabilities?.Warning}.Where(w=>!string.IsNullOrWhiteSpace(w)).Concat(scanSelection.Warnings));
-    private ScanSettings CurrentSettings()=>new(){Source=Source,Dpi=Dpi,Color=Color,Paper=Paper,Landscape=Landscape,Deskew=Deskew,AutoCrop=AutoCrop,DetectBlank=DetectBlank,NativeUi=NativeUi,Brightness=(int)Brightness,Contrast=(int)Contrast};
+    private ScanSettings CurrentSettings()=>new(){Source=Source,Dpi=Dpi,Color=Color,Paper=Paper,Landscape=Landscape,Deskew=Deskew,AutoCrop=AutoCrop,DetectBlank=DetectBlank,NativeUi=NativeUi,Brightness=Brightness,Contrast=Contrast};
     private void ApplySettings(ScanSettings scan)
     {
         applyingScanSettings=true;
@@ -175,7 +179,7 @@ public sealed class MainViewModel : Bindable,IDisposable
         store.Save(session);state.MoveTo(SessionState.Initializing);Status=Text.Get("Initializing");
         string folder=store.Folder(session.Id);nint handle=WindowHandle();
         try {
-            state.MoveTo(SessionState.Scanning);Status=Text.Get("Scanning");log.LogInformation("Scan started");
+            state.MoveTo(SessionState.Scanning);Status=$"{Text.Get("Scanning")} · B {scanSettings.Brightness:+0;-0;0}, C {scanSettings.Contrast:+0;-0;0}";log.LogInformation("Scan started: brightness={Brightness}, contrast={Contrast}, crop={Crop}",scanSettings.Brightness,scanSettings.Contrast,scanSettings.AutoCrop);
             await StaTask.Run(()=>scanner.ScanAsync(selected,scanSettings,folder,async page=>{
                 await Application.Current.Dispatcher.InvokeAsync(()=>{
                     state.MoveTo(SessionState.Processing);session.Append(page);store.Save(session);
@@ -223,7 +227,7 @@ public sealed class MainViewModel : Bindable,IDisposable
             if(version==previewVersion)
             {
                 Preview=rendered.Image;
-                PreviewInfo=$"{rendered.Width} × {rendered.Height} px · "+(data.AutoCrop?Text.Get(rendered.CropChanged?"CropApplied":"CropUnchanged"):Text.Get("OriginalImage"));
+                PreviewInfo=$"{rendered.Width} × {rendered.Height} px · "+(data.AutoCrop?Text.Get(rendered.CropChanged?"CropApplied":"CropUnchanged"):Text.Get("OriginalImage"))+$" · B {data.Brightness:+0;-0;0}, C {data.Contrast:+0;-0;0}";
             }
         }catch(Exception ex){log.LogWarning(ex,"Preview failed");Status="Unable to preview this page; the original is preserved.";}
         finally{previewGate.Release();}

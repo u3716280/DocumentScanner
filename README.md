@@ -1,8 +1,8 @@
-# Document Scanner 1.0.2 — validation candidate
+# Document Scanner 1.0.3 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI:** [Build #1 passed](https://github.com/u3716280/DocumentScanner/actions/runs/43581943815): 60 unit tests, 9 Windows integration tests, and portable x86/x64 packages. Physical scanner tests remain pending.
+**Previous Windows CI (v1.0.2):** [Build #1 passed](https://github.com/u3716280/DocumentScanner/actions/runs/43581943815): 60 unit tests, 9 Windows integration tests, and portable x86/x64 packages. Physical scanner tests remain pending.
 
 **Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
 
@@ -43,7 +43,7 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 ./build/Publish.ps1 -Runtime win-x86
 ```
 
-Output: `artifacts/DocumentScanner-v1.0.2-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
+Output: `artifacts/DocumentScanner-v1.0.3-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`; upload this source tree to the desired repository, then run **Windows portable build** from Actions. Repository: https://github.com/u3716280/DocumentScanner. The workflow runs on pushes to main; hardware testing still requires a physical scanner.
 
@@ -79,3 +79,11 @@ The preview footer reports the actual output pixel dimensions and whether a crop
 Save Profile captures Paper Source, DPI, Color Mode, Paper Size and all processing flags together. Load Profile queries the selected device first, then restores the saved settings as one update. Bound ComboBox null selections during list refresh are ignored/restored instead of overwriting stored values with enum defaults or zero DPI. Unsupported saved values produce visible warnings and do not change the saved profile itself. The selected profile name is synchronized with the name box.
 
 Upgrade with the application closed. Preserve the existing Config folder (and Sessions if recovery is needed); the distribution does not contain a replacement settings.json. Existing schema-version-1 profile files remain compatible. If an older version already saved incorrect default values, select the intended Source/DPI/Color, save that profile again, change the settings, then Load Profile to verify restoration.
+
+## Tone controls and repeated scan correction (1.0.3)
+
+Brightness and Contrast show their exact integer values next to the sliders, with a live thumb tooltip and a **Reset Brightness / Contrast to 0** button. Zero means no app tone adjustment. These controls apply to new scans; the preview footer also reports the selected page's stored B/C values. Profiles retain their integer settings.
+
+Each scan requests neutral brightness/contrast from WIA/TWAIN when the native scanner dialog is off. App adjustments are stored per page and rendered once from the immutable acquired PNG, after geometry operations. Auto Crop never changes acquisition brightness/contrast and never overwrites the original. Preview, cropped thumbnails and export use the same tone path. Opening old sessions defaults the new page fields to zero, preserving their existing image bytes.
+
+After upgrading, click Reset to 0 and scan the same page again with Auto Crop on/off. If the native scanner settings dialog is enabled, it can apply its own exposure/contrast settings; reset those there for a controlled comparison. Earlier scans whose colors were already baked into the original cannot be repaired automatically by this update.
