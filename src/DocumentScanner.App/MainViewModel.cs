@@ -56,12 +56,13 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     public int Dpi{get=>scanSelection.Dpi;set=>scanSelection.Dpi=value;}
     public ScanColor Color{get=>scanSelection.Color;set=>scanSelection.Color=value;}
     public string Paper{get=>scanSelection.Paper;set=>scanSelection.Paper=value;}
-    public bool Landscape{get;set;}public bool Deskew{get;set;}=true;private bool autoCrop;
+    private bool landscape,deskew=true,detectBlank,removeBlank,nativeUi;
+    public bool Landscape{get=>landscape;set=>Set(ref landscape,value);}public bool Deskew{get=>deskew;set=>Set(ref deskew,value);}private bool autoCrop;
     public bool AutoCrop
     {
         get=>autoCrop;
         set{Set(ref autoCrop,value);}
-    }public bool DetectBlank{get;set;}public bool RemoveBlank{get;set;}public bool NativeUi{get;set;}
+    }public bool DetectBlank{get=>detectBlank;set=>Set(ref detectBlank,value);}public bool RemoveBlank{get=>removeBlank;set=>Set(ref removeBlank,value);}public bool NativeUi{get=>nativeUi;set=>Set(ref nativeUi,value);}
     private readonly ImageAdjustments adjustments=new();
     public int Brightness{get=>adjustments.Brightness;set=>adjustments.Brightness=value;}
     public int Contrast{get=>adjustments.Contrast;set=>adjustments.Contrast=value;}
@@ -295,7 +296,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         // Commit UI + engine snapshot only after capability validation. Unknown capability native workflow preserves requested values.
         selectedDevice=device;Changed(nameof(SelectedDevice));Changed(nameof(DeviceDetails));capabilities=caps;
         if(issues.Count>0)capabilities=null;
-        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};
+        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};foreach(string property in new[]{nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
         activeProfile=profile;ProfileName=profile.Name;confirmation.Invalidate();PersistSettings();Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
     }
     private void DeleteProfile(){if(SelectedProfile is {} p&&Confirm("ProfileConfirm")){Profiles.Remove(p);SelectedProfile=null;Changed(nameof(SelectedProfile));PersistSettings();}}
