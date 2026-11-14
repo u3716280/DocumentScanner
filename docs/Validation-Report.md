@@ -1,0 +1,47 @@
+# Validation report — 14 November 2026
+
+Status: **Buildable validation candidate; Windows runtime and hardware acceptance pending.**
+
+| Check | Observed result |
+|---|---|
+| SDK | .NET SDK 10.0.404 Linux x64; downloaded archive verified using SHA-512 from official .NET release metadata |
+| Solution compilation | PASS, 7 projects, 0 warnings, 0 errors |
+| Unit tests | PASS, 60 passed, 0 failed, 0 skipped |
+| Windows image/PDF integration tests | Compiled; execution unavailable on Linux (Microsoft.WindowsDesktop.App required). No pass claimed |
+| win-x64 self-contained publish | PASS |
+| win-x86 self-contained publish | PASS |
+| PE architecture checks | PASS for app EXE, CoreCLR, x86 worker and matching PDFium native DLL |
+| Main runtime inventory | .NET and Windows Desktop 10.0.15 included in each package |
+| Win32 worker | NAPS2 supplied 1.6.0 binary present; x86 PE; embeds its upstream .NET 10.0.9 runtime |
+| XAML, resource/project XML and workflow YAML parsing | PASS |
+| UI resource name | Compiled `DocumentScanner.App.Resources.Strings.resources` verified in assembly |
+| Package ZIP integrity | Checked after packaging |
+| Native PDFium | x64 binary matched upstream Chromium 7947 release byte-for-byte; corresponding native license notices included |
+| Windows UI launch | NOT TESTED |
+| USB/WIA/TWAIN/eSCL scanning | NOT TESTED with physical hardware |
+| ADF/duplex, jam/disconnection | NOT TESTED with physical hardware |
+| 100-page/600-DPI memory measurements | NOT TESTED |
+| Standard-user clean Windows with no .NET | NOT TESTED |
+| GitHub Actions execution | Workflow authored; not run or uploaded to a repository in this session |
+
+Unit coverage includes invalid Windows filenames, Unicode filenames, numbering, delete/reorder/rotation/crop/clear/Undo, preservation of new pages across Undo, state transitions, invalid/null settings, configuration backup/round-trip, collision-safe file finalization and session recovery/path containment.
+
+Nine Windows integration cases are provided (including a WPF ComboBox profile restoration case and three crop cases for JPG, PNG and PDF): JPG and PNG rotation/file count, PDF order and original physical dimensions, A4 fitting and blank-page non-destructive review, and cancelled PDF not being finalized. These require Windows to execute.
+
+The portable packages were cross-published on Linux. Successful compilation and static dependency checks do not prove runtime scanner compatibility. Follow Hardware-Tests.md before treating the application as production-ready.
+
+Logs from the observed build, unit run, integration execution limitation and publish operations are included under docs/evidence in the source package. Package inventories include SHA-256 values for individual files. ZIP checksums are supplied with the deliverables.
+
+## Auto Crop correction — 1.0.1
+
+The previous checkbox affected only future scan acquisition, thumbnail rendering ignored crop metadata, and a global fixed-threshold bounding box could be pinned to scanner noise/shadows. The new checkbox applies to selected pages as well as future scans; Auto Crop and Reset crop are explicit, idempotent commands. Preview, thumbnails and export use the same renderer. The preview footer shows actual output dimensions and whether removable margins were found.
+
+Seventeen new cross-platform test cases cover white/off-white/gray backgrounds, isolated noise, dark platen/paper bounds, scanner-edge strips, thin border frames, multiple content blocks, dark images, blank noisy pages, content near edges, invalid inputs, sparse small text and reversible multi-page crop flags. All 48 unit cases passed on Linux. Windows codec/UI regression tests are compiled but cannot be executed in this Linux environment. Original image files are preserved.
+
+## Profile correction — 1.0.2
+
+Twelve additional unit cases test the production ScanSettingsSelection component: reentrant collection-reset writes, selection stability during all property notifications, repeated capability refresh, switching device capabilities, source-specific option changes, unsupported settings with warnings, custom DPI with unknown detail caps, empty/unknown capabilities, persisted two-profile restart/load, deferred null SelectedItem writes and new user selections before saving. The resulting 60/60 unit cases passed.
+
+The ViewModel uses the tested selection component, reads device capabilities before applying the saved profile, and binds the four ComboBoxes through nullable selection properties. Transient nulls cannot become Flatbed/Color/0 defaults. The model restores target notifications after deferred null selections. Saved profile records remain unchanged when unsupported values require an explicitly reported runtime fallback.
+
+A Windows-only test uses actual WPF ComboBoxes with two-way bindings and dispatcher drains to check repeated profile restoration. It is compiled but has not run in this Linux environment. No Windows UI or physical-device pass is claimed.

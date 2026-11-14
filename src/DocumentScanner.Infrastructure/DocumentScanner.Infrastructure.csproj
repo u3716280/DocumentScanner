@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><ProjectReference Include="../DocumentScanner.Core/DocumentScanner.Core.csproj"/><PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.15"/></ItemGroup></Project>

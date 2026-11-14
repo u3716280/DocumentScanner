@@ -1,0 +1,51 @@
+name: Windows portable build
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore
+        run: dotnet restore DocumentScanner.sln
+      - name: Build
+        run: dotnet build DocumentScanner.sln -c Release --no-restore
+      - name: Unit tests
+        run: dotnet test tests/DocumentScanner.UnitTests -c Release --no-build --logger "trx;LogFileName=unit.trx"
+      - name: Windows image and PDF tests
+        run: dotnet test tests/DocumentScanner.IntegrationTests -c Release --no-build --logger "trx;LogFileName=integration.trx"
+      - name: Publish x64
+        shell: pwsh
+        run: ./build/Publish.ps1 -Runtime win-x64
+      - name: Publish x86
+        shell: pwsh
+        run: ./build/Publish.ps1 -Runtime win-x86
+      - name: Runtime and dependency inventory
+        shell: pwsh
+        run: |
+          Get-ChildItem publish -Recurse -File | Select-Object FullName, Length | ConvertTo-Json | Set-Content artifacts/dependency-inventory.json
+      - name: Upload portable ZIPs
+        uses: actions/upload-artifact@v4
+        with:
+          name: DocumentScanner-portable
+          path: artifacts/*
+          if-no-files-found: error
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/**/TestResults/*.trx
