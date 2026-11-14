@@ -28,7 +28,9 @@ public sealed class StartupTests
     });
     [Fact]public Task DefaultProfileIsPreparedWithoutFullDiscoveryAndResetKeepsSavedProfiles()=>ExportTests.OnSta(async()=>{
         string root=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N"));try{var paths=new AppPaths(root);var store=new SettingsStore(paths);var profile=Profile();store.Save(new(){Profiles=[profile],DefaultProfileId=profile.Id});using var scanner=new Scanner();using var vm=new MainViewModel(scanner,new DocumentExporter(),store,new SessionStore(paths),NullLogger<MainViewModel>.Instance);
-        await vm.InitializeAsync();Assert.Equal(0,scanner.All);Assert.Equal(1,scanner.Find);Assert.Equal(1,scanner.Caps);Assert.Equal(profile,vm.SelectedProfile);Assert.Equal(Device,vm.SelectedDevice);
+        var window=new MainWindow(vm,paths);window.Measure(new System.Windows.Size(1440,960));window.Arrange(new System.Windows.Rect(0,0,1440,960));
+        await vm.InitializeAsync();await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.Equal(0,scanner.All);Assert.Equal(1,scanner.Find);Assert.Equal(1,scanner.Caps);Assert.Equal(profile,vm.SelectedProfile);Assert.Equal(Device,vm.SelectedDevice);
+        vm.SelectedDevice=null;await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.Equal(Device,vm.SelectedDevice);Assert.Equal(1,scanner.Caps);
         vm.ResetProfileCommand.Execute(null);await Wait(vm);Assert.Equal(1,scanner.All);Assert.Equal(1,scanner.Find);Assert.Equal(2,scanner.Caps);Assert.Null(vm.SelectedProfile);Assert.Single(vm.Profiles);Assert.Equal(profile.Id,store.Load().DefaultProfileId);
         }finally{Directory.Delete(root,true);}
     });

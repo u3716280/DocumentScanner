@@ -40,7 +40,14 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     public DeviceInfo? SelectedDevice
     {
         get=>selectedDevice;
-        set {if(!changingDevices&&Set(ref selectedDevice,value)){scannerAvailable=false;Changed(nameof(DeviceDetails));if(!Busy&&value!=null)_=Operation(LoadCapabilities);}}
+        set
+        {
+            if(changingDevices)return;
+            // A deferred ComboBox null during list refresh must not undo a verified selection.
+            // Explicit Reset clears the backing field directly; the user has no clear-selection action here.
+            if(value==null&&selectedDevice!=null&&Devices.Contains(selectedDevice)){Changed(nameof(SelectedDevice));return;}
+            if(Set(ref selectedDevice,value)){scannerAvailable=false;Changed(nameof(DeviceDetails));if(!Busy&&value!=null)_=Operation(LoadCapabilities);}
+        }
     }
     public string DeviceDetails=>SelectedDevice==null?"":$"{SelectedDevice.Driver}\n{SelectedDevice.Id}";
     private bool busy;
