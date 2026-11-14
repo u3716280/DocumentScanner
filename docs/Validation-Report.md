@@ -1,16 +1,16 @@
-# Document Scanner 1.1.0 — Validation Report
+# Document Scanner 1.1.1 — Validation Report
 
 Status: **Windows CI passed; validation candidate.** Physical scanner, interactive Windows/scaling and live ERPNext deployment acceptance remain pending.
 
 Date: 14 November 2026.
-Code commit: `78edd9926b6d6277ee17666db616177a56195c78`.
-Evidence: [Windows portable build run 43609631356](https://github.com/u3716280/DocumentScanner/actions/runs/43609631356).
+Code commit: `0ac1805931961c67d799fa6494bf3be28887e1da`.
+Evidence: [Windows portable build run 43612441172](https://github.com/u3716280/DocumentScanner/actions/runs/43612441172).
 
 | Check | Result | Scope / limits |
 |---|---|---|
 | Windows Release build | Passed | Native WPF compilation; not a visual or hardware certification |
-| Unit tests | 100 passed | Existing document/image/profile tests plus schema migration, future-schema preservation, full profile round-trip, exact capability handling, prefix contracts, selected-page tone, confirmation identity, HTTPS validation, local resume, upload response-loss reconciliation and acknowledged-item skipping |
-| Windows integration tests | 22 passed | PNG/JPG/PDF/export orientation and pixel regressions; WPF bindings; profile load into an existing window updates Source/DPI/Color/Prefix and engine options; all three save actions are present and unavailable with no selected pages; Profile Manager groups exist without applying settings on open |
+| Unit tests | 111 passed | Existing document/image/profile tests plus schema migration, future-schema preservation, full profile round-trip, exact capability handling, prefix contracts, selected-page tone, confirmation identity, HTTPS validation, local resume, upload response-loss reconciliation and acknowledged-item skipping |
+| Windows integration tests | 27 passed | PNG/JPG/PDF/export orientation and pixel regressions; WPF bindings; profile load into an existing window updates Source/DPI/Color/Prefix and engine options; all three save actions are present and unavailable with no selected pages; Profile Manager groups exist without applying settings on open |
 | Bridge contract tests | 7 passed | Isolated fake-Frappe tests of authentication, document/write/revision checks, per-user operation identity, receipt destination/privacy/content verification, bad payload rejection and reuse of a completed receipt |
 | Portable win-x64 | Published and statically verified | Complete ZIP + SHA-256 checksum, dependency/license inventory and worker/runtime checks |
 | Portable win-x86 | Published and statically verified | Complete ZIP + SHA-256 checksum, dependency/license inventory and worker/runtime checks |
@@ -20,8 +20,8 @@ Evidence: [Windows portable build run 43609631356](https://github.com/u3716280/D
 
 Open the CI run and download **Artifacts → DocumentScanner-portable**. It contains:
 
-- `DocumentScanner-v1.1.0-win-x64.zip`
-- `DocumentScanner-v1.1.0-win-x86.zip`
+- `DocumentScanner-v1.1.1-win-x64.zip`
+- `DocumentScanner-v1.1.1-win-x86.zip`
 - Associated Windows ZIP checksums and inventories
 - `DocumentScanner-ERPNext-Bridge-v1.1.0.zip`
 
@@ -42,6 +42,20 @@ Output operates on selected pages. Local-only saving is independent of ERPNext. 
 
 No production site, live API credentials or real ERPNext records were used. Do not interpret fake transport/bridge tests as a production exactly-once or compatibility guarantee. See [ERPNext setup](ERPNext-Setup.md), [hardware checklist](Hardware-Tests.md) and [known limitations](Known-Limitations.md).
 
-## 1.1.1 startup optimization candidate
+## Startup optimization evidence (1.1.1)
 
-Local cross-build and unit checks are in progress; Windows CI evidence will be updated after completion. New tests cover first use, default-profile startup, no/stale default, explicit profile loading, Reset Profile, exact identity, failed lookups and cancellation. Hardware cold/warm startup timing has not been benchmarked. The ERPNext bridge source remains 1.1.0.
+Automated startup cases verify:
+
+| Scenario | Verified behavior with fake scanner transport |
+|---|---|
+| No profiles | One all-backend discovery, one selected-device capability request; repeated Initialize calls share the same task |
+| Valid Default Profile | Zero full-discovery calls; one exact-device lookup and one capability request |
+| Profiles without a default / stale default reference | No automatic scanner calls until explicit selection or Reset |
+| Load another profile | Its device can be found and added without previous full enumeration; exact ID/driver/TWAIN architecture is checked |
+| Reset Profile | Full discovery runs, active profile clears, saved/default profile records are retained |
+| Bound WPF window | Startup/reset ordering stays correct with real ComboBox bindings; deferred null selection cannot erase the verified device or add another capability query |
+| Unavailable/mismatched/cancelled target | No automatic full search/substitution; cancellation after a late capability response cannot return a prepared scanner |
+
+WPF yields before recovery/driver work and recovery inspection runs off the UI thread. Actual scan preflight validation and serialized scanner access remain in place. New logs record recovery/startup, each full-search backend, exact-target lookup and capability durations without device endpoints/IDs or document contents.
+
+These checks establish work ordering and call counts, **not a measured wall-clock startup speedup**. Cold/warm launches, network discovery, vendor initialization and actual hardware response still require the user's timing comparison. The unchanged ERPNext bridge remains version 1.1.0.
