@@ -1,73 +1,43 @@
-# Validation report — 14 November 2026
+# Document Scanner 1.1.0 — Validation Report
 
-Status: **v1.0.3 Windows CI passed; physical scanner and full manual application acceptance remain pending.**
+Status: **Windows CI passed; validation candidate.** Physical scanner, interactive Windows/scaling and live ERPNext deployment acceptance remain pending.
 
-Current Windows evidence: https://github.com/u3716280/DocumentScanner/actions/runs/43586676124 (code commit d9a656b1aca77a0d2c499685dcb2c1cca3b94940). Earlier authoring notes below describe Linux-only checks before this run.
+Date: 14 November 2026.
+Code commit: `78edd9926b6d6277ee17666db616177a56195c78`.
+Evidence: [Windows portable build run 43609631356](https://github.com/u3716280/DocumentScanner/actions/runs/43609631356).
 
-| Check | Observed result |
-|---|---|
-| SDK | .NET SDK 10.0.404 Linux x64; downloaded archive verified using SHA-512 from official .NET release metadata |
-| Solution compilation | PASS, 7 projects, 0 warnings, 0 errors |
-| Unit tests | PASS, 73 passed, 0 failed, 0 skipped on Windows CI (also passed on Linux) |
-| Windows image/PDF and WPF binding integration tests | PASS, 15 passed, 0 failed, 0 skipped on windows-2022 |
-| win-x64 self-contained publish | PASS |
-| win-x86 self-contained publish | PASS |
-| PE architecture checks | PASS for app EXE, CoreCLR, x86 worker and matching PDFium native DLL |
-| Main runtime inventory | .NET and Windows Desktop 10.0.15 included in each package |
-| Win32 worker | NAPS2 supplied 1.6.0 binary present; x86 PE; embeds its upstream .NET 10.0.9 runtime |
-| XAML, resource/project XML and workflow YAML parsing | PASS |
-| UI resource name | Compiled `DocumentScanner.App.Resources.Strings.resources` verified in assembly |
-| Package ZIP integrity | Checked after packaging |
-| Native PDFium | x64 binary matched upstream Chromium 7947 release byte-for-byte; corresponding native license notices included |
-| Full application UI launch/manual operation | NOT TESTED; WPF ComboBox bindings were exercised by CI |
-| USB/WIA/TWAIN/eSCL scanning | NOT TESTED with physical hardware |
-| ADF/duplex, jam/disconnection | NOT TESTED with physical hardware |
-| 100-page/600-DPI memory measurements | NOT TESTED |
-| Standard-user clean Windows with no .NET | NOT TESTED |
-| GitHub Actions execution | PASS: restore, build, 73 unit tests, 15 Windows integration tests, x64/x86 publish, package checks and artifact upload |
+| Check | Result | Scope / limits |
+|---|---|---|
+| Windows Release build | Passed | Native WPF compilation; not a visual or hardware certification |
+| Unit tests | 100 passed | Existing document/image/profile tests plus schema migration, future-schema preservation, full profile round-trip, exact capability handling, prefix contracts, selected-page tone, confirmation identity, HTTPS validation, local resume, upload response-loss reconciliation and acknowledged-item skipping |
+| Windows integration tests | 22 passed | PNG/JPG/PDF/export orientation and pixel regressions; WPF bindings; profile load into an existing window updates Source/DPI/Color/Prefix and engine options; all three save actions are present and unavailable with no selected pages; Profile Manager groups exist without applying settings on open |
+| Bridge contract tests | 7 passed | Isolated fake-Frappe tests of authentication, document/write/revision checks, per-user operation identity, receipt destination/privacy/content verification, bad payload rejection and reuse of a completed receipt |
+| Portable win-x64 | Published and statically verified | Complete ZIP + SHA-256 checksum, dependency/license inventory and worker/runtime checks |
+| Portable win-x86 | Published and statically verified | Complete ZIP + SHA-256 checksum, dependency/license inventory and worker/runtime checks |
+| ERPNext bridge source | Packaged | Source ZIP included with portable artifact; not installed on a server by CI |
 
-Unit coverage includes invalid Windows filenames, Unicode filenames, numbering, delete/reorder/rotation/crop/clear/Undo, preservation of new pages across Undo, state transitions, invalid/null settings, configuration backup/round-trip, collision-safe file finalization and session recovery/path containment.
+## Downloads
 
-Nine Windows integration cases are provided (including a WPF ComboBox profile restoration case and three crop cases for JPG, PNG and PDF): JPG and PNG rotation/file count, PDF order and original physical dimensions, A4 fitting and blank-page non-destructive review, and cancelled PDF not being finalized. These passed on the Windows GitHub Actions runner.
+Open the CI run and download **Artifacts → DocumentScanner-portable**. It contains:
 
-The portable packages were cross-published on Linux. Successful compilation and static dependency checks do not prove runtime scanner compatibility. Follow Hardware-Tests.md before treating the application as production-ready.
+- `DocumentScanner-v1.1.0-win-x64.zip`
+- `DocumentScanner-v1.1.0-win-x86.zip`
+- Associated Windows ZIP checksums and inventories
+- `DocumentScanner-ERPNext-Bridge-v1.1.0.zip`
 
-Logs from the observed build, unit run, integration execution limitation and publish operations are included under docs/evidence in the source package. Package inventories include SHA-256 values for individual files. ZIP checksums are supplied with the deliverables.
+Separate **test-results** artifact contains TRX reports. The run logs include isolated Python bridge test results.
 
-## Auto Crop correction — 1.0.1
+## What this establishes
 
-The previous checkbox affected only future scan acquisition, thumbnail rendering ignored crop metadata, and a global fixed-threshold bounding box could be pinned to scanner noise/shadows. The new checkbox applies to selected pages as well as future scans; Auto Crop and Reset crop are explicit, idempotent commands. Preview, thumbnails and export use the same renderer. The preview footer shows actual output dimensions and whether removable margins were found.
+The requested native redesign and application features compile and pass the described automated checks. Profiles preserve scanner/processing/output/ERPNext fields in schema 2 and store no API credentials or reusable confirmed destination. Unsupported profile settings are checked before atomic application; unknown scanner capabilities require explicit native-dialog handling. Current-page edits remain metadata over originals.
 
-Seventeen new cross-platform test cases cover white/off-white/gray backgrounds, isolated noise, dark platen/paper bounds, scanner-edge strips, thin border frames, multiple content blocks, dark images, blank noisy pages, content near edges, invalid inputs, sparse small text and reversible multi-page crop flags. All 48 unit cases passed on Linux. Windows codec/UI regression tests are compiled but cannot be executed in this Linux environment. Original image files are preserved.
+Output operates on selected pages. Local-only saving is independent of ERPNext. Send-only uses recoverable temporary artifacts; combined delivery saves local copies before upload. Per-artifact journals retain hashes/receipts; retry queries the server before re-sending and skips acknowledged successes. Explicit destination confirmation and a separate final Send action are required.
 
-## Profile correction — 1.0.2
+## Required acceptance still pending
 
-Twelve additional unit cases test the production ScanSettingsSelection component: reentrant collection-reset writes, selection stability during all property notifications, repeated capability refresh, switching device capabilities, source-specific option changes, unsupported settings with warnings, custom DPI with unknown detail caps, empty/unknown capabilities, persisted two-profile restart/load, deferred null SelectedItem writes and new user selections before saving. The resulting 60/60 unit cases passed.
+- Actual WIA/TWAIN/eSCL hardware: source/duplex/DPI/color behavior, repeated scans and native driver overrides.
+- Interactive Windows layout, crop move/resize/keyboard interaction, High Contrast, screen readers, long localized labels and display scaling. Automated binding/layout checks do not establish pixel equivalence with the approved design images.
+- Installed Frappe/ERPNext staging: bridge installation/migration, permission/field mappings, private/public File behavior, custom File hooks, database isolation, distributed Redis lock/receipt behavior, concurrent retries, crash/rollback and network interruption after server commit.
+- Windows Credential Manager setup under the actual user's account and portability to another Windows account/PC.
 
-The ViewModel uses the tested selection component, reads device capabilities before applying the saved profile, and binds the four ComboBoxes through nullable selection properties. Transient nulls cannot become Flatbed/Color/0 defaults. The model restores target notifications after deferred null selections. Saved profile records remain unchanged when unsupported values require an explicitly reported runtime fallback.
-
-A Windows-only test uses actual WPF ComboBoxes with two-way bindings and dispatcher drains to check repeated profile restoration. It is compiled but has not run in this Linux environment. No Windows UI or physical-device pass is claimed.
-
-## First Windows CI run — 14 November 2026
-
-Windows portable build #1 succeeded on the unmodified v1.0.2 application source: 60/60 unit tests and 9/9 integration tests passed. The integration run includes actual WPF two-way ComboBox bindings with repeated profile restoration, PNG/JPG/PDF crop consistency, image orientation, PDF page size/order, blank-page handling and cancelled export. Both win-x64 and win-x86 self-contained packages, inventories and checksums were created and uploaded as the DocumentScanner-portable artifact. This supersedes the earlier compile-only Windows-test notes.
-
-No physical scanner, native scanner dialog, full application interaction, clean-machine no-.NET deployment or 100-page hardware performance claim is made.
-
-## Tone correction — 1.0.3
-
-Local unit tests: 73 passed. The prior 60-unit/9-integration Windows evidence above belongs to v1.0.2. Six new Windows regression cases (15 total) exercise neutral crop retained-pixel identity, repeated export without accumulating a nonzero brightness level, neutral fresh scan options for WIA/TWAIN/eSCL, and live WPF slider/readout/reset bindings. All 15 Windows integration cases passed in the new CI run, including the six tone regressions.
-
-The user's report identifies darkening in both preview and saved output; its physical device cause has not been reproduced here. Inspection found the earlier SDK-after-scan path skipped explicitly resetting WIA/TWAIN driver brightness/contrast. The new path resets supported non-native acquisition settings to neutral and applies app tone once as page metadata. No physical-device fix is claimed without a repeat scan on the user's scanner.
-
-## Windows tone regression result — v1.0.3
-
-Build run 43586676124 passed: 73/73 unit cases, 15/15 Windows integration cases, x64 and x86 publish, package verification and artifact upload. Neutral tone/crop processing retained every tested pixel byte; nonzero brightness stayed at one application across repeated crop toggles and PNG exports. Fresh WIA/TWAIN/eSCL option objects requested neutral acquisition tone, and the WPF slider/readout/reset bindings stayed synchronized. These are deterministic synthetic-input and configuration tests; no physical scanner reproduction or guarantee is implied.
-
-## v1.0.4 manual crop / auto color validation
-
-Cross-build: passed with no warnings/errors. Unit tests: 81 passed locally. [Windows CI passed](https://github.com/u3716280/DocumentScanner/actions/runs/43599625808) at code commit b570660e3f10c6e2341a5676d0bc125f98ff4696: 81 unit tests and 20 Windows integration tests, with verified portable x64/x86 packages. Five new Windows cases cover manual-crop pixel identity and PNG export at all four rotations plus repeatable auto-color preview/export/reset. Interactive mouse/dialog smoke tests remain pending; see Hardware-Tests.md.
-
-## 1.1.0 validation candidate
-
-New native UI/profile/delivery and bridge contract implementation. Windows CI passed at code commit ef5a5ff656dae4d9dbed3427bc9495216bcfdd50: [run 43609133037](https://github.com/u3716280/DocumentScanner/actions/runs/43609133037). All 99 unit tests, 22 Windows integration tests and 7 isolated bridge contract tests passed; both portable architectures and the bridge source ZIP were packaged. The live WPF profile test loads into an existing window and checks displayed Source/DPI/Color/Prefix against the saved settings and engine options. UI fidelity/scaling, real scanner drivers and live ERPNext/Frappe/Redis/database behavior remain unverified. See ERPNext-Setup.md for deployment and acceptance requirements. Previous release evidence is historical, not validation of this new scope.
+No production site, live API credentials or real ERPNext records were used. Do not interpret fake transport/bridge tests as a production exactly-once or compatibility guarantee. See [ERPNext setup](ERPNext-Setup.md), [hardware checklist](Hardware-Tests.md) and [known limitations](Known-Limitations.md).
