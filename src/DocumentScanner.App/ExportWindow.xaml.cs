@@ -6,11 +6,12 @@ using DocumentScanner.Core;
 namespace DocumentScanner.App;
 public partial class ExportWindow : Window
 {
+    private readonly string requiredPrefix;
     public ExportOptions? Options{get;private set;}
     public bool SelectedOnly=>SelectedBox.IsChecked==true;
     public ExportWindow(AppSettings settings,int selected,bool sendOnly=false)
     {
-        InitializeComponent();FolderBox.Text=settings.OutputFolder;QualityBox.Text=settings.JpegQuality.ToString();
+        requiredPrefix=settings.Output.Prefix;InitializeComponent();FolderBox.Text=settings.OutputFolder;QualityBox.Text=settings.JpegQuality.ToString();
         FormatBox.ItemsSource=Enum.GetValues<ExportFormat>();FormatBox.SelectedItem=settings.Format;
         PaperBox.ItemsSource=Enum.GetValues<OutputPaper>();PaperBox.SelectedItem=OutputPaper.Original;
         NameBox.Text=FindAutomaticName(settings.Output);SelectedBox.IsChecked=true;SelectedBox.IsEnabled=false;SelectedBox.Content=$"Selected pages only · {selected} pages";
@@ -39,6 +40,7 @@ public partial class ExportWindow : Window
     {
         try {
             if(!int.TryParse(QualityBox.Text,out int quality))throw new ArgumentException("JPEG quality must be a number.");
+            if(requiredPrefix.Length>0&&!NameBox.Text.Trim().StartsWith(requiredPrefix,StringComparison.Ordinal))throw new ArgumentException("Filename must begin with the configured prefix: "+requiredPrefix+". Change Prefix in the main output bar if needed.");
             Options=new(FolderBox.Text.Trim(),NameBox.Text.Trim(),(ExportFormat)FormatBox.SelectedItem,quality,(OutputPaper)PaperBox.SelectedItem,FitBox.IsChecked==true);
             Options.Validate();DialogResult=true;
         }catch(ArgumentException ex){ValidationMessage.Text=ex.Message;}

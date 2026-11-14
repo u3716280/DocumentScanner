@@ -17,6 +17,7 @@ public static class OutputNaming
         if(output.Prefix.Any(c=>c<32||"<>:\"/\\|?*{}".Contains(c)))throw new ArgumentException("Invalid filename prefix.");
         string pattern=output.Pattern;
         if(pattern.Split("{prefix}").Length>2)throw new ArgumentException("Use the prefix token once.");
+        if(output.Prefix.Length>0&&pattern.Contains("{prefix}")&&!pattern.StartsWith("{prefix}",StringComparison.Ordinal))throw new ArgumentException("The filename prefix token must be at the start of the pattern.");
         if(!pattern.Contains("{prefix}")&&output.Prefix.Length>0)pattern="{prefix}-"+pattern;
         string name=pattern.Replace("{prefix}",output.Prefix).Replace("{date:yyyyMMdd}",date.ToString("yyyyMMdd",CultureInfo.InvariantCulture)).Replace("{sequence:0000}",sequence.ToString("0000",CultureInfo.InvariantCulture));
         if(name.Contains('{')||name.Contains('}'))throw new ArgumentException("Supported tokens: {prefix}, {date:yyyyMMdd}, {sequence:0000}.");

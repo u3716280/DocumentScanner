@@ -2,7 +2,7 @@
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI (v1.0.4):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43599625808): 81 unit tests, 20 Windows integration tests, and portable x86/x64 packages. Physical scanner tests remain pending.
+**Windows CI (v1.1.0):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43609133037): 99 unit tests, 22 Windows integration tests, 7 isolated bridge contract tests, portable x86/x64 packages and bridge source ZIP. Physical scanner tests remain pending.
 
 **Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
 

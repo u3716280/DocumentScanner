@@ -41,4 +41,10 @@ public sealed class ProfileV2Tests
         var model=new ScanSettingsSelection();var requested=new ScanSettings{Dpi=600,Color=ScanColor.Grayscale};var caps=new ScannerCapabilities([new(ScanSource.Flatbed,[150,300],[ScanColor.Color],["A4"])],true);
         Assert.Equal(requested,model.ApplyCapabilities(caps,requested,true));Assert.Equal(600,model.SelectedDpi);Assert.Equal(ScanColor.Grayscale,model.SelectedColor);Assert.NotEmpty(ProfileValidation.CapabilityIssues(requested,caps));
     }
+    [Fact]public void PrefixIsEnforcedForCustomPatternsAndCannotBeDuplicatedOrMoved()
+    {
+        var output=new OutputDefaults{Prefix="POD",Pattern="{date:yyyyMMdd}-{sequence:0000}"};Assert.Equal("POD-20261114-0001",OutputNaming.Resolve(output,new(2026,11,14),1));
+        Assert.Throws<ArgumentException>(()=>OutputNaming.Resolve(output with{Pattern="{date:yyyyMMdd}-{prefix}"},DateTime.Today,1));
+        Assert.Throws<ArgumentException>(()=>OutputNaming.Resolve(output with{Pattern="{prefix}-{prefix}"},DateTime.Today,1));
+    }
 }
