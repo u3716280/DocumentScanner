@@ -1,15 +1,15 @@
 # Validation report — 14 November 2026
 
-Status: **v1.0.3 tone correction: local build/unit checks complete; new Windows CI pending. Physical scanner acceptance remains pending.**
+Status: **v1.0.3 Windows CI passed; physical scanner and full manual application acceptance remain pending.**
 
-Current Windows evidence: https://github.com/u3716280/DocumentScanner/actions/runs/43581943815 (code commit 4afc14d6655e8b1c86b59f724c6bb54b8a2bbb9a). Earlier authoring notes below describe Linux-only checks before this run.
+Current Windows evidence: https://github.com/u3716280/DocumentScanner/actions/runs/43586676124 (code commit d9a656b1aca77a0d2c499685dcb2c1cca3b94940). Earlier authoring notes below describe Linux-only checks before this run.
 
 | Check | Observed result |
 |---|---|
 | SDK | .NET SDK 10.0.404 Linux x64; downloaded archive verified using SHA-512 from official .NET release metadata |
 | Solution compilation | PASS, 7 projects, 0 warnings, 0 errors |
-| Unit tests | PASS, 60 passed, 0 failed, 0 skipped on Windows CI (also passed on Linux) |
-| Windows image/PDF and WPF binding integration tests | PASS, 9 passed, 0 failed, 0 skipped on windows-2022 |
+| Unit tests | PASS, 73 passed, 0 failed, 0 skipped on Windows CI (also passed on Linux) |
+| Windows image/PDF and WPF binding integration tests | PASS, 15 passed, 0 failed, 0 skipped on windows-2022 |
 | win-x64 self-contained publish | PASS |
 | win-x86 self-contained publish | PASS |
 | PE architecture checks | PASS for app EXE, CoreCLR, x86 worker and matching PDFium native DLL |
@@ -24,7 +24,7 @@ Current Windows evidence: https://github.com/u3716280/DocumentScanner/actions/ru
 | ADF/duplex, jam/disconnection | NOT TESTED with physical hardware |
 | 100-page/600-DPI memory measurements | NOT TESTED |
 | Standard-user clean Windows with no .NET | NOT TESTED |
-| GitHub Actions execution | PASS: restore, build, 60 unit tests, 9 Windows integration tests, x64/x86 publish, package checks and artifact upload |
+| GitHub Actions execution | PASS: restore, build, 73 unit tests, 15 Windows integration tests, x64/x86 publish, package checks and artifact upload |
 
 Unit coverage includes invalid Windows filenames, Unicode filenames, numbering, delete/reorder/rotation/crop/clear/Undo, preservation of new pages across Undo, state transitions, invalid/null settings, configuration backup/round-trip, collision-safe file finalization and session recovery/path containment.
 
@@ -56,6 +56,10 @@ No physical scanner, native scanner dialog, full application interaction, clean-
 
 ## Tone correction — 1.0.3
 
-Local unit tests: 73 passed. The prior 60-unit/9-integration Windows evidence above belongs to v1.0.2. Six new Windows regression cases (15 total) exercise neutral crop retained-pixel identity, repeated export without accumulating a nonzero brightness level, neutral fresh scan options for WIA/TWAIN/eSCL, and live WPF slider/readout/reset bindings. They must pass in the new Windows CI run before claiming Windows validation of this change.
+Local unit tests: 73 passed. The prior 60-unit/9-integration Windows evidence above belongs to v1.0.2. Six new Windows regression cases (15 total) exercise neutral crop retained-pixel identity, repeated export without accumulating a nonzero brightness level, neutral fresh scan options for WIA/TWAIN/eSCL, and live WPF slider/readout/reset bindings. All 15 Windows integration cases passed in the new CI run, including the six tone regressions.
 
 The user's report identifies darkening in both preview and saved output; its physical device cause has not been reproduced here. Inspection found the earlier SDK-after-scan path skipped explicitly resetting WIA/TWAIN driver brightness/contrast. The new path resets supported non-native acquisition settings to neutral and applies app tone once as page metadata. No physical-device fix is claimed without a repeat scan on the user's scanner.
+
+## Windows tone regression result — v1.0.3
+
+Build run 43586676124 passed: 73/73 unit cases, 15/15 Windows integration cases, x64 and x86 publish, package verification and artifact upload. Neutral tone/crop processing retained every tested pixel byte; nonzero brightness stayed at one application across repeated crop toggles and PNG exports. Fresh WIA/TWAIN/eSCL option objects requested neutral acquisition tone, and the WPF slider/readout/reset bindings stayed synchronized. These are deterministic synthetic-input and configuration tests; no physical scanner reproduction or guarantee is implied.
