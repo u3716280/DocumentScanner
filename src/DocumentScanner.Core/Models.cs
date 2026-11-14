@@ -21,6 +21,7 @@ public sealed record ScanSettings
     public bool Deskew { get; init; } = true;
     public bool AutoCrop { get; init; }
     public bool DetectBlank { get; init; }
+    public bool RemoveBlank { get; init; }
     public bool NativeUi { get; init; }
     public int Brightness { get; init; }
     public int Contrast { get; init; }
@@ -32,10 +33,20 @@ public sealed record ScanSettings
         if (!Enum.IsDefined(Source) || !Enum.IsDefined(Color)) throw new ArgumentException("Invalid scanner settings.");
     }
 }
-public sealed record ScanProfile(string Name, DeviceInfo Device, ScanSettings Settings);
+public sealed record ScanProfile(string Name, DeviceInfo Device, ScanSettings Settings)
+{
+    public int SchemaVersion{get;init;}=2;
+    public Guid Id{get;init;}=Guid.NewGuid();
+    public OutputDefaults Output{get;init;}=new();
+    public ErpDefaults Erp{get;init;}=new();
+}
 public sealed record AppSettings
 {
     public int SchemaVersion { get; init; } = 1;
+    public Guid? DefaultProfileId { get; init; }
+    public OutputDefaults Output { get; init; } = new();
+    public ErpDefaults Erp { get; init; } = new();
+    public List<ErpSite> Sites { get; init; } = [];
     public string? LastDeviceKey { get; init; }
     public string? DefaultDeviceKey { get; init; }
     public string OutputFolder { get; init; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Scanned Documents");
@@ -47,11 +58,12 @@ public sealed record AppSettings
     public List<DeviceInfo> ManualDevices { get; init; } = [];
     public void Validate()
     {
-        if (Scan is null || Profiles is null || ManualDevices is null) throw new ArgumentException("Configuration sections cannot be null.");
+        if (Scan is null || Profiles is null || ManualDevices is null || Sites is null || Output is null || Erp is null) throw new ArgumentException("Configuration sections cannot be null.");
         if (SchemaVersion != 1 || JpegQuality is <60 or >100 || !Enum.IsDefined(Format)) throw new ArgumentException("Invalid configuration version or export quality.");
         Scan.Validate();
         ArgumentException.ThrowIfNullOrWhiteSpace(OutputFolder);
-        foreach(var profile in Profiles) profile.Settings.Validate();
+        Output.Validate();foreach(var profile in Profiles) ProfileValidation.Validate(profile);foreach(var site in Sites)site.Validate();
+        if(Profiles.Select(p=>p.Id).Distinct().Count()!=Profiles.Count||Profiles.Select(p=>p.Name.ToUpperInvariant()).Distinct().Count()!=Profiles.Count)throw new ArgumentException("Duplicate profile identities.");
     }
 }
 public sealed record PageData

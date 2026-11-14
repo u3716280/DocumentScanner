@@ -9,7 +9,7 @@ using DocumentScanner.Infrastructure;
 using DocumentScanner.Scanning;
 using DocumentScanner.ImagingSupport;
 namespace DocumentScanner.App;
-public sealed class MainViewModel : Bindable,IDisposable
+public sealed partial class MainViewModel : Bindable,IDisposable
 {
     private readonly IScannerService scanner; private readonly IDocumentExporter exporter;
     private readonly SettingsStore settingsStore; private readonly SessionStore store;private readonly ILogger log;
@@ -29,7 +29,7 @@ public sealed class MainViewModel : Bindable,IDisposable
     public ScanProfile? SelectedProfile
     {
         get=>selectedProfile;
-        set{if(Set(ref selectedProfile,value)){if(value!=null)ProfileName=value.Name;RaiseCommands();}}
+        set{if(Set(ref selectedProfile,value)){if(value!=null)ProfileName=value.Name;RaiseCommands();if(initialized&&NotBusy&&value!=null)_=Operation(LoadProfile);}}
     }
     private string profileName="";public string ProfileName{get=>profileName;set=>Set(ref profileName,value);}
     public string Endpoint{get;set;}="";
@@ -56,12 +56,12 @@ public sealed class MainViewModel : Bindable,IDisposable
     public int Dpi{get=>scanSelection.Dpi;set=>scanSelection.Dpi=value;}
     public ScanColor Color{get=>scanSelection.Color;set=>scanSelection.Color=value;}
     public string Paper{get=>scanSelection.Paper;set=>scanSelection.Paper=value;}
-    public bool Landscape{get;set;}public bool Deskew{get;set;}=true;private bool autoCrop,applyingScanSettings;
+    public bool Landscape{get;set;}public bool Deskew{get;set;}=true;private bool autoCrop;
     public bool AutoCrop
     {
         get=>autoCrop;
-        set{if(Set(ref autoCrop,value)&&!applyingScanSettings&&NotBusy&&selection.Count>0)Edit(()=>session.SetCrop(selection,value));}
-    }public bool DetectBlank{get;set;}public bool NativeUi{get;set;}
+        set{Set(ref autoCrop,value);}
+    }public bool DetectBlank{get;set;}public bool RemoveBlank{get;set;}public bool NativeUi{get;set;}
     private readonly ImageAdjustments adjustments=new();
     public int Brightness{get=>adjustments.Brightness;set=>adjustments.Brightness=value;}
     public int Contrast{get=>adjustments.Contrast;set=>adjustments.Contrast=value;}
@@ -82,11 +82,18 @@ public sealed class MainViewModel : Bindable,IDisposable
             Changed(e.PropertyName);
             if(e.PropertyName==nameof(ScanSettingsSelection.Warnings))UpdateCapabilityWarning();
         };
-        settings=settingsStore.Load();ApplySettings(settings.Scan);foreach(var p in settings.Profiles)Profiles.Add(p);
+        settings=settingsStore.Load();ApplySettings(settings.Scan);
+        PropertyChanged+=(_,e)=>{if(e.PropertyName!=nameof(ProfileState))Changed(nameof(ProfileState));};foreach(var p in settings.Profiles)Profiles.Add(p);
         RefreshCommand=Command(()=>_=Operation(RefreshDevices));
         ScanCommand=Command(()=>_=Operation(Scan),()=>NotBusy&&SelectedDevice!=null);
         CancelCommand=Command(()=>{cancellation?.Cancel();Status=Text.Get("Working");},()=>Busy&&cancellation is {IsCancellationRequested:false});
-        SaveCommand=Command(()=>_=Operation(Save),()=>NotBusy&&Pages.Count>0);
+        SaveCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Local)),()=>NotBusy&&selection.Count>0);
+        SendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Erp)),()=>NotBusy&&selection.Count>0);
+        SaveAndSendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.LocalAndErp)),()=>NotBusy&&selection.Count>0);
+        NewDocumentCommand=Command(NewDocument);
+        ProfileManagerCommand=Command(()=>_=Operation(ManageProfiles));
+        RetryUploadCommand=Command(()=>_=Operation(RetryUpload),()=>NotBusy&&File.Exists(JournalPath));
+        ApplyPageToneCommand=Command(()=>Edit(()=>session.SetTone(selection,PageBrightness,PageContrast)),()=>NotBusy&&selection.Count>0);
         DeleteCommand=Command(()=>Edit(()=>{if(Confirm("ConfirmDelete"))session.Delete(selection);}),()=>NotBusy&&selection.Count>0);
         ClearCommand=Command(()=>Edit(()=>{if(Confirm("ConfirmClear"))session.Clear();}),()=>NotBusy&&Pages.Count>0);
         UndoCommand=Command(()=>Edit(session.Undo),()=>NotBusy&&session.CanUndo);
@@ -122,6 +129,8 @@ public sealed class MainViewModel : Bindable,IDisposable
             if(answer==MessageBoxResult.No)store.Delete(recovered.Id);else break;
         }
         await Operation(RefreshDevices);
+        if(settings.DefaultProfileId is {} id&&Profiles.FirstOrDefault(p=>p.Id==id) is {} profile){selectedProfile=profile;Changed(nameof(SelectedProfile));await Operation(LoadProfile);}
+        initialized=true;
     }
     private async Task Operation(Func<Task> action)
     {
@@ -163,21 +172,23 @@ public sealed class MainViewModel : Bindable,IDisposable
         settings=settings with{LastDeviceKey=device.Key};PersistSettings();Status=Text.Get("Ready");
     }
     private void UpdateCapabilityWarning()=>CapabilityWarning=string.Join("\n",new[]{capabilities?.Warning}.Where(w=>!string.IsNullOrWhiteSpace(w)).Concat(scanSelection.Warnings));
-    private ScanSettings CurrentSettings()=>new(){Source=Source,Dpi=Dpi,Color=Color,Paper=Paper,Landscape=Landscape,Deskew=Deskew,AutoCrop=AutoCrop,DetectBlank=DetectBlank,NativeUi=NativeUi,Brightness=Brightness,Contrast=Contrast};
+    private ScanSettings CurrentSettings()=>new(){Source=Source,Dpi=Dpi,Color=Color,Paper=Paper,Landscape=Landscape,Deskew=Deskew,AutoCrop=AutoCrop,DetectBlank=DetectBlank,RemoveBlank=RemoveBlank,NativeUi=NativeUi,Brightness=Brightness,Contrast=Contrast};
     private void ApplySettings(ScanSettings scan)
     {
-        applyingScanSettings=true;
-        try{
-        scan=scanSelection.ApplyCapabilities(capabilities,scan);
-        Landscape=scan.Landscape;Deskew=scan.Deskew;AutoCrop=scan.AutoCrop;DetectBlank=scan.DetectBlank;NativeUi=scan.NativeUi;Brightness=scan.Brightness;Contrast=scan.Contrast;
-        foreach(var name in new[]{nameof(Source),nameof(Dpi),nameof(Color),nameof(Paper),nameof(Landscape),nameof(Deskew),nameof(AutoCrop),nameof(DetectBlank),nameof(NativeUi),nameof(Brightness),nameof(Contrast)})Changed(name);
-        }finally{applyingScanSettings=false;}
+        {
+        scan=scanSelection.ApplyCapabilities(capabilities,scan,true);
+        Landscape=scan.Landscape;Deskew=scan.Deskew;AutoCrop=scan.AutoCrop;DetectBlank=scan.DetectBlank;RemoveBlank=scan.RemoveBlank;NativeUi=scan.NativeUi;Brightness=scan.Brightness;Contrast=scan.Contrast;
+        foreach(var name in new[]{nameof(Source),nameof(Dpi),nameof(Color),nameof(Paper),nameof(Landscape),nameof(Deskew),nameof(AutoCrop),nameof(DetectBlank),nameof(RemoveBlank),nameof(NativeUi),nameof(Brightness),nameof(Contrast)})Changed(name);
+        }
     }
     private void PersistSettings(){settings=settings with{Scan=CurrentSettings(),Profiles=Profiles.ToList()};settingsStore.Save(settings);}
     private async Task Scan()
     {
         if(SelectedDevice==null)throw new InvalidOperationException(Text.Get("NoScanner"));
         if(capabilities?.Known==true&&!Sources.Contains(Source))throw new InvalidOperationException("The selected source is not supported.");
+        capabilities=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(SelectedDevice,Token));
+        var issues=ProfileValidation.CapabilityIssues(CurrentSettings(),capabilities);
+        if(issues.Count>0&&!(NativeUi&&ProfileValidation.OnlyUnknown(issues)))throw new InvalidOperationException(string.Join("\n",issues)+"\nReview scan settings or explicitly enable native UI for unknown capabilities.");
         if(!NativeUi&&(Dpis.Count==0||Colors.Count==0))throw new InvalidOperationException("No supported settings. Try the scanner's native dialog.");
         var selected=SelectedDevice;var scanSettings=CurrentSettings();scanSettings.Validate();PersistSettings();
         store.Save(session);state.MoveTo(SessionState.Initializing);Status=Text.Get("Initializing");
@@ -197,6 +208,7 @@ public sealed class MainViewModel : Bindable,IDisposable
         catch{state.MoveTo(SessionState.Error);throw;}
         finally {store.Save(session);try{SessionStore.CleanupWorkFiles(folder);}catch(IOException){}catch(UnauthorizedAccessException){}RaiseCommands();}
         if(Pages.Count>0)RestoreSelection?.Invoke(new[]{Pages[^1].Data.Id});
+        if(RemoveBlank){var blanks=session.Pages.Where(p=>p.BlankCandidate).Select(p=>p.Id).ToArray();if(blanks.Length>0&&MessageBox.Show($"Review: remove {blanks.Length} possible blank pages? Originals remain on disk and Undo can restore them.","Blank page review",MessageBoxButton.YesNo)==MessageBoxResult.Yes){session.Delete(blanks);store.Save(session);RefreshPages();}}
     }
     private void RefreshPages()
     {
@@ -224,10 +236,11 @@ public sealed class MainViewModel : Bindable,IDisposable
         selection=selected.Select(p=>p.Data.Id).ToList();Changed(nameof(PageSummary));RaiseCommands();
         int version=++previewVersion;var id=selection.LastOrDefault();Preview=null;PreviewInfo="";
         var data=session.Pages.FirstOrDefault(p=>p.Id==id);if(data==null)return;
+        PageBrightness=data.Brightness;PageContrast=data.Contrast;
         await previewGate.WaitAsync();
         try {
             if(version!=previewVersion)return;
-            string folder=store.Folder(session.Id);var rendered=await StaTask.Run(()=>Task.FromResult(Imaging.RenderDetails(data,folder,1600)));
+            string folder=store.Folder(session.Id);var rendered=await StaTask.Run(()=>Task.FromResult(Imaging.RenderDetails(ShowOriginal?data with{ManualCrop=null,AutoCrop=false,AutoColorCorrection=false,Brightness=0,Contrast=0}:data,folder,1600)));
             if(version==previewVersion)
             {
                 Preview=rendered.Image;
@@ -248,19 +261,6 @@ public sealed class MainViewModel : Bindable,IDisposable
             store.Save(session);RefreshPages();
         }
     }
-    private async Task Save()
-    {
-        var dialog=new ExportWindow(settings,selection.Count){Owner=Application.Current.MainWindow};if(dialog.ShowDialog()!=true)return;
-        var options=dialog.Options!;var chosen=dialog.SelectedOnly?session.Pages.Where(p=>selection.Contains(p.Id)).ToArray():session.Pages.ToArray();
-        Status=Text.Get("ExportProgress");var progress=new Progress<int>(n=>Status=$"{Text.Get("ExportProgress")} · {n}/{chosen.Length}");
-        log.LogInformation("Export started: {Pages} pages",chosen.Length);
-        var result=await StaTask.Run(()=>exporter.ExportAsync(chosen,store.Folder(session.Id),options,progress,Token));
-        settings=settings with{OutputFolder=options.Folder,Format=options.Format,JpegQuality=options.Quality};PersistSettings();
-        string heading=result.Cancelled?Text.Get("ExportCancelled"):result.Error!=null?Text.Get("ExportFailed"):Text.Get("Saved");
-        Status=$"{heading} · {result.Saved.Count}";
-        MessageBox.Show(heading+"\n\n"+string.Join("\n",result.Saved)+(result.Error==null?"":"\n\n"+result.Error),Text.Get("Title"),MessageBoxButton.OK,result.Error==null?MessageBoxImage.Information:MessageBoxImage.Warning);
-        log.LogInformation("Export finished: {Count} files; cancelled={Cancelled}; failed={Failed}",result.Saved.Count,result.Cancelled,result.Error!=null);
-    }
     private async Task Connect()
     {
         var endpoint=Endpoint;var device=await StaTask.Run(()=>scanner.ConnectEndpointAsync(endpoint,Token));
@@ -273,16 +273,30 @@ public sealed class MainViewModel : Bindable,IDisposable
         string name=ProfileName.Trim();if(name.Length==0||name.Length>80)throw new ArgumentException("Enter a profile name (1–80 characters).");
         var existing=Profiles.FirstOrDefault(p=>p.Name.Equals(name,StringComparison.OrdinalIgnoreCase));
         var snapshot=CurrentSettings();snapshot.Validate();
-        if(existing!=null)Profiles.Remove(existing);var profile=new ScanProfile(name,SelectedDevice!,snapshot);Profiles.Add(profile);SelectedProfile=profile;Changed(nameof(SelectedProfile));PersistSettings();Status=Text.Get("ProfileSaved");
+        if(existing!=null)Profiles.Remove(existing);var profile=new ScanProfile(name,SelectedDevice!,snapshot){Id=existing?.Id??Guid.NewGuid(),Output=settings.Output,Erp=settings.Erp};Profiles.Add(profile);SelectedProfile=profile;Changed(nameof(SelectedProfile));PersistSettings();Status=Text.Get("ProfileSaved");
     }
     private async Task LoadProfile()
     {
+        try{await LoadProfileCore();}catch{selectedProfile=activeProfile;Changed(nameof(SelectedProfile));throw;}
+    }
+    private async Task LoadProfileCore()
+    {
         if(SelectedProfile is not {} profile)return;
-        if(!Devices.Any(d=>d.Key==profile.Device.Key))Devices.Add(profile.Device);
-        SelectedDevice=Devices.First(d=>d.Key==profile.Device.Key);
-        // Resolve this device's capabilities first, then restore all saved fields together.
-        await LoadCapabilities(profile.Settings);ProfileName=profile.Name;
-        Status=scanSelection.Warnings.Count==0?Text.Get("ProfileLoaded"):Text.Get("ProfileLoadedAdjusted");
+        ProfileValidation.Validate(profile);
+        var device=Devices.FirstOrDefault(d=>d.Key==profile.Device.Key&&d.Driver==profile.Device.Driver);
+        if(device==null)throw new InvalidOperationException("Saved scanner/driver is unavailable. Active settings are unchanged. Discover/connect the device or explicitly edit the profile.");
+        var caps=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(device,Token));
+        var issues=ProfileValidation.CapabilityIssues(profile.Settings,caps);var requested=profile.Settings;
+        if(issues.Count>0){
+            if(!ProfileValidation.OnlyUnknown(issues))throw new InvalidOperationException(string.Join("\n",issues)+"\nNo settings were applied. Edit the profile to select supported values.");
+            if(MessageBox.Show(string.Join("\n",issues)+"\nUse the native scanner dialog explicitly? Profile values are not changed.","Unverified scanner capabilities",MessageBoxButton.YesNo)!=MessageBoxResult.Yes){selectedProfile=activeProfile;Changed(nameof(SelectedProfile));return;}
+            requested=requested with{NativeUi=true};
+        }
+        // Commit UI + engine snapshot only after capability validation. Unknown capability native workflow preserves requested values.
+        selectedDevice=device;Changed(nameof(SelectedDevice));Changed(nameof(DeviceDetails));capabilities=caps;
+        if(issues.Count>0)capabilities=null;
+        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};
+        activeProfile=profile;ProfileName=profile.Name;confirmation.Invalidate();PersistSettings();Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
     }
     private void DeleteProfile(){if(SelectedProfile is {} p&&Confirm("ProfileConfirm")){Profiles.Remove(p);SelectedProfile=null;Changed(nameof(SelectedProfile));PersistSettings();}}
     private async Task ImportImages()

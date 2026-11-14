@@ -1,4 +1,4 @@
-# Document Scanner 1.0.4 — validation candidate
+# Document Scanner 1.1.0 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
@@ -43,13 +43,13 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 ./build/Publish.ps1 -Runtime win-x86
 ```
 
-Output: `artifacts/DocumentScanner-v1.0.4-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
+Output: `artifacts/DocumentScanner-v1.1.0-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`; upload this source tree to the desired repository, then run **Windows portable build** from Actions. Repository: https://github.com/u3716280/DocumentScanner. The workflow runs on pushes to main; hardware testing still requires a physical scanner.
 
 ## Data, privacy and recovery
 
-Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, document uploads, OCR downloads, or scan-sharing server is enabled.
+Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, OCR downloads or scan-sharing server is enabled. ERPNext uploads are optional, explicitly confirmed actions and require the separately installed bridge. See docs/ERPNext-Setup.md.
 
 Settings use JSON and are saved automatically. Invalid configuration is backed up before defaults are used. Session images are immutable; rotation and crop are metadata edits, so saving repeatedly does not repeatedly JPEG-encode the originals.
 
@@ -95,3 +95,13 @@ Select exactly one page and click **Manual Crop**. Drag a rectangle over the ori
 Select one or more pages and click **Auto Color** to balance tinted paper and improve document contrast. **Reset Auto Color** disables it, keeping any manual brightness/contrast values. The conservative histogram correction estimates a white point per color channel; dark pages may remain unchanged. It is designed for documents: inspect photos, artwork and strongly colored paper before saving. It does not recover clipped or missing detail.
 
 Preview, thumbnails and JPG/PNG/PDF export share the same renderer: crop, rotation, optional auto color, then the stored manual brightness/contrast. Every render starts from the original file, so repeatedly applying Auto Color does not accumulate processing. Both edits preserve the original and support Undo. No scanner-specific profile changes are required: these tools edit acquired/imported pages.
+
+## Profiles, three Save Actions and ERPNext (1.1.0)
+
+The native WPF workspace now follows the reviewed layout: toolbar Profile selector, grouped page editing, separate Next scan / Selected pages settings, prefix/format output strip and three explicit Save Actions. Current-page tone changes require Apply tone and do not change future scan defaults. Manual crop now has movable/resizable handles, numeric percent coordinates, keyboard movement/resizing and retained selection on window resize.
+
+Manage profiles supports Create, Save, Save As, Rename, Delete, Default and JSON Import/Export across Scanner / Processing / Output / ERPNext groups. Profiles use schema 2 with stable IDs. Legacy configuration is backed up before migration; newer unsupported schemas block writes. Loading validates the exact device/driver and capabilities before applying settings; unavailable/unsupported values are not silently replaced. Unknown capabilities require explicit native-dialog handling. Profile loading never confirms an ERPNext destination.
+
+Save Local exports selected pages only. Send to ERPNext needs no permanent local output folder. The combined action completes local copies before upload, retains successes and journals per-file outcomes for retry. In-app search shows real document details and requires separate Confirm destination and Send now actions. A new/recovered session starts unconfirmed. API credentials are held in Windows Credential Manager, outside profile JSON.
+
+**ERPNext prerequisite:** install the companion `document_scanner_bridge` on an authorized staging site first. Source is under `integrations/document_scanner_bridge`; CI packages it as `DocumentScanner-ERPNext-Bridge-v1.1.0.zip`. See [setup and limitations](docs/ERPNext-Setup.md). The build does not deploy this app, configure credentials or establish live-site/hardware compatibility. The bridge contract tests use isolated fakes, not a running Frappe/Redis/database stack.

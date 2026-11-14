@@ -39,11 +39,25 @@ public sealed class AppPaths
 public sealed class SettingsStore(AppPaths paths)
 {
     public string? LoadWarning {get;private set;}
+    private bool newerSchema;
     public AppSettings Load()
     {
         if(!File.Exists(paths.Config))return new();
-        try { var value=JsonFiles.Read<AppSettings>(paths.Config); value.Validate(); return value; }
-        catch(Exception ex) when(ex is JsonException or ArgumentException or IOException or NotSupportedException or NullReferenceException)
+        try {
+            using(var check=JsonDocument.Parse(File.ReadAllText(paths.Config))){
+                if(check.RootElement.TryGetProperty("SchemaVersion",out var schema)&&schema.GetInt32()>1||check.RootElement.TryGetProperty("Profiles",out var profiles)&&profiles.EnumerateArray().Any(p=>p.TryGetProperty("SchemaVersion",out var v)&&v.GetInt32()>2)){newerSchema=true;LoadWarning="Settings contain a newer unsupported schema. The original file is preserved and settings writes are blocked. Use a compatible application version.";return new();}
+            }
+            var value=JsonFiles.Read<AppSettings>(paths.Config);
+            using var raw=JsonDocument.Parse(File.ReadAllText(paths.Config));
+            bool legacy=!raw.RootElement.TryGetProperty("Output",out _);
+            if(legacy){File.Copy(paths.Config,paths.Config+".before-profile-v2-"+DateTime.UtcNow.ToString("yyyyMMddHHmmssfff"),false);
+                var output=new OutputDefaults{Folder=value.OutputFolder,Format=value.Format,JpegQuality=value.JpegQuality};
+                value=value with{Output=output,Profiles=value.Profiles.Select(p=>p with{Output=output}).ToList()};
+                LoadWarning="Legacy settings were backed up and migrated to profile schema 2. New export/ERPNext fields use explicit defaults; review them before use.";
+            }
+            value.Validate();if(legacy)JsonFiles.Write(paths.Config,value);return value;
+        }
+        catch(Exception ex) when(ex is JsonException or ArgumentException or IOException or NotSupportedException or NullReferenceException or FormatException or InvalidOperationException)
         {
             LoadWarning="Settings could not be loaded. Safe defaults are in use; the previous file was preserved.";
             string backup=paths.Config+".invalid-"+DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
@@ -51,7 +65,7 @@ public sealed class SettingsStore(AppPaths paths)
             return new();
         }
     }
-    public void Save(AppSettings settings) { settings.Validate(); JsonFiles.Write(paths.Config,settings); }
+    public void Save(AppSettings settings) { if(newerSchema)throw new InvalidOperationException("Newer settings schema: original file preserved; writes are blocked.");settings.Validate(); JsonFiles.Write(paths.Config,settings); }
 }
 public sealed class SessionStore(AppPaths paths)
 {

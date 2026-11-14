@@ -38,6 +38,10 @@ public sealed class DocumentSession
         crop.Validate();if(!pages.Any(p=>p.Id==id))return;Checkpoint();
         pages=pages.Select(p=>p.Id==id?p with{ManualCrop=crop,AutoCrop=false}:p).ToList();
     }
+    public void SetTone(IEnumerable<Guid> ids,int brightness,int contrast)
+    {
+        new ScanSettings{Brightness=brightness,Contrast=contrast}.Validate();var set=ids.ToHashSet();if(!pages.Any(p=>set.Contains(p.Id)&&(p.Brightness!=brightness||p.Contrast!=contrast)))return;Checkpoint();pages=pages.Select(p=>set.Contains(p.Id)?p with{Brightness=brightness,Contrast=contrast}:p).ToList();
+    }
     public void SetAutoColor(IEnumerable<Guid> ids,bool enabled)
     {
         var set=ids.ToHashSet();if(!pages.Any(p=>set.Contains(p.Id)&&p.AutoColorCorrection!=enabled))return;

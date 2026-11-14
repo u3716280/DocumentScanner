@@ -48,3 +48,15 @@ Profile ที่รุ่นเก่าเคยบันทึกค่าเ
 - เลือกหนึ่งหรือหลายหน้า กด Auto Color เพื่อปรับสีพื้นกระดาษและความชัด ใช้ Reset Auto Color เพื่อปิด โดยคง Brightness/Contrast เดิม
 - ไม่เขียนทับภาพต้นฉบับ การกด Auto Color ซ้ำไม่สะสมการปรับสี และบันทึกผลเหมือน Preview
 - เหมาะกับเอกสาร ควรตรวจภาพถ่ายและกระดาษสีก่อนบันทึก ระบบไม่ได้คืนรายละเอียดที่หายไปแล้ว
+
+รุ่น 1.1.0 — UI ใหม่, Profiles และ ERPNext (Validation Candidate)
+- เลือก Profile บน toolbar หรือเปิด Manage profiles เพื่อสร้าง/Save/Save As/Rename/Delete/ตั้ง Default/Import/Export JSON
+- Profile เก็บ Scanner/Processing/Output/ERPNext ครบ กลไกโหลดตรวจความสามารถก่อนใช้ ไม่มีการแทน DPI/Source/Color ที่ไม่รองรับโดยเงียบ ๆ
+- Advanced scan defaults ใช้กับหน้าใหม่ ส่วน Selected pages ใช้แก้ภาพที่เลือกและต้องกด Apply tone
+- Save Local / Send to ERPNext / Save Local & Send to ERPNext ทำงานกับหน้าที่เลือกเท่านั้น
+- ส่ง ERPNext ต้องติดตั้ง document_scanner_bridge ฝั่งเซิร์ฟเวอร์ก่อน ดู ERPNext-Setup.md ใน source หรือแพ็กเกจ Bridge จาก GitHub Actions
+- ตั้ง Site/API credentials ผ่าน Manage profiles → ERPNext → Manage sites ไม่เก็บ secret ใน Profile JSON
+- ค้นหาเอกสาร ดูรายละเอียดจริง กด Confirm destination แล้วกด Send now แยกอีกครั้ง
+- ผลลัพธ์ Local/ERPNext แยกกัน Retry ตรวจ server receipts ก่อนส่งซ้ำ ไม่ส่งไฟล์ที่ยืนยันสำเร็จแล้ว
+- New document เริ่ม session ใหม่ ส่วน Scan more เพิ่มหน้าในเอกสารเดิม
+- ยังต้องทดสอบกับเครื่องสแกนจริงและ ERPNext staging ของผู้ใช้ก่อนใช้งานจริง ไม่ได้ deploy หรือทดสอบไซต์จริงในขั้นตอน build นี้

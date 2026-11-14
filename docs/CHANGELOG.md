@@ -1,3 +1,12 @@
+# 1.1.0 — Native redesign, complete profiles and ERPNext delivery
+
+- Implement the reviewed native workspace, explicit selected-page save actions, output prefix/format preview and separate scan/page tone scopes.
+- Add complete versioned profile lifecycle, default profile, import/export, backup migration, exact capability checks and atomic load, with Windows per-user credential storage for ERPNext sites.
+- Add in-app document search/detail/confirmation, separate final send review, recoverable frozen output, independent local/upload reporting, resumable local copy and receipt-first upload retry.
+- Include a separately deployed Frappe bridge with permission-filtered search/detail retrieval and scoped durable attachment receipts. No live deployment or production integration test is claimed.
+- Improve manual crop with move/resize handles, numeric/keyboard controls and resize retention. Add New document/session isolation and original comparison.
+- Add profile, WPF binding/layout, delivery failure/retry and isolated bridge contract tests. Actual hardware, interactive UI/scaling and live Frappe/Redis/database verification remain pending.
+
 # 1.0.4 — Manual crop and document auto color
 
 - Add a drag-to-select Manual Crop dialog for one page, using full oriented originals and normalized original-image coordinates.

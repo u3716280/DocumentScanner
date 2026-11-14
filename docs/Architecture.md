@@ -12,4 +12,7 @@ Export: load and render one page at a time, encode PNG/JPG using WPF; import pre
 
 Session: immutable PNG originals; separate small thumbnails; rotation/crop flags and list ordering in JSON. Undo retains page references, not bitmap copies. Acquired pages are added to earlier undo snapshots so Undo cannot discard newly scanned pages. A document may span many scan operations. Keep/Discard on close is independent of successful Export.
 
-Security: no cloud, no scan-sharing server, no telemetry, no arbitrary command execution. Export basename rejects Windows device names and path characters; recovery paths must remain under the session root. HTTP/HTTPS endpoints are explicit user input and verified through scanner capabilities. TLS certificate checks are not disabled.
+Security: optional explicit ERPNext uploads via a separately installed permission-checked bridge; no scan-sharing server or telemetry, no arbitrary command execution. Export basename rejects Windows device names and path characters; recovery paths must remain under the session root. HTTP/HTTPS endpoints are explicit user input and verified through scanner capabilities. TLS certificate checks are not disabled.
+
+
+1.1.0 adds profile schema 2, immutable output snapshots/outboxes, per-artifact delivery journals, local copy resume, receipt reconciliation, Windows Credential Manager and in-app destination verification. Scanner profiles hold site references, never credentials or reusable document confirmations. The bridge validates document read/write and field permissions, scopes idempotency keys to authenticated users, verifies target/privacy/hash, and commits attachment/receipt before releasing its lock. Source and setup are versioned separately from site deployment.

@@ -67,3 +67,7 @@ Build run 43586676124 passed: 73/73 unit cases, 15/15 Windows integration cases,
 ## v1.0.4 manual crop / auto color validation
 
 Cross-build: passed with no warnings/errors. Unit tests: 81 passed locally. [Windows CI passed](https://github.com/u3716280/DocumentScanner/actions/runs/43599625808) at code commit b570660e3f10c6e2341a5676d0bc125f98ff4696: 81 unit tests and 20 Windows integration tests, with verified portable x64/x86 packages. Five new Windows cases cover manual-crop pixel identity and PNG export at all four rotations plus repeatable auto-color preview/export/reset. Interactive mouse/dialog smoke tests remain pending; see Hardware-Tests.md.
+
+## 1.1.0 validation candidate
+
+New native UI/profile/delivery and bridge contract implementation. Local unit suite and cross-build are being checked; Windows CI result will be recorded after completion. UI fidelity/scaling, real scanner drivers and live ERPNext/Frappe/Redis/database behavior remain unverified. See ERPNext-Setup.md for deployment and acceptance requirements. Previous release evidence is historical, not validation of this new scope.

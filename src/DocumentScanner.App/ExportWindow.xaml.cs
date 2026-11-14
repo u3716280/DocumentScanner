@@ -8,21 +8,22 @@ public partial class ExportWindow : Window
 {
     public ExportOptions? Options{get;private set;}
     public bool SelectedOnly=>SelectedBox.IsChecked==true;
-    public ExportWindow(AppSettings settings,int selected)
+    public ExportWindow(AppSettings settings,int selected,bool sendOnly=false)
     {
         InitializeComponent();FolderBox.Text=settings.OutputFolder;QualityBox.Text=settings.JpegQuality.ToString();
         FormatBox.ItemsSource=Enum.GetValues<ExportFormat>();FormatBox.SelectedItem=settings.Format;
         PaperBox.ItemsSource=Enum.GetValues<OutputPaper>();PaperBox.SelectedItem=OutputPaper.Original;
-        NameBox.Text=FindAutomaticName(settings.OutputFolder);SelectedBox.IsEnabled=selected>0;
+        NameBox.Text=FindAutomaticName(settings.Output);SelectedBox.IsChecked=true;SelectedBox.IsEnabled=false;SelectedBox.Content=$"Selected pages only · {selected} pages";
+        if(sendOnly){FolderBox.IsEnabled=false;FolderBox.ToolTip="Send-only uses temporary session artifacts; no permanent folder is required.";}
     }
-    private static string FindAutomaticName(string folder)
+    private static string FindAutomaticName(OutputDefaults output)
     {
         for(int n=1;n<100000;n++)
         {
-            string name=FilenameRules.Automatic(DateTime.Now,n);
-            if(!Directory.Exists(folder)||!Directory.EnumerateFiles(folder,name+"*").Any())return name;
+            string name=OutputNaming.Resolve(output,DateTime.Now,n);
+            if(!Directory.Exists(output.Folder)||!Directory.EnumerateFiles(output.Folder,name+"*").Any())return name;
         }
-        return "SCAN-"+DateTime.Now.ToString("yyyyMMdd-HHmmssfff");
+        throw new IOException("No available output filename.");
     }
     private void FormatChanged(object sender,SelectionChangedEventArgs e)
     {

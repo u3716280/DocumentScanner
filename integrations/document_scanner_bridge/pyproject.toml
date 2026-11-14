@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "document_scanner_bridge"
+version = "1.1.0"
+description = "Permission-checked Document Scanner ERPNext integration"
+requires-python = ">=3.10"
+authors = [{name = "Document Scanner"}]
+[tool.setuptools.packages.find]
+where = ["."]
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.txt"]

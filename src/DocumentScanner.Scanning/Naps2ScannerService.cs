@@ -106,7 +106,7 @@ public sealed class Naps2ScannerService : IScannerService
                             DpiX=bitmap.DpiX>0?bitmap.DpiX:settings.Dpi,DpiY=bitmap.DpiY>0?bitmap.DpiY:settings.Dpi,
                             Rotation=settings.Landscape&&bitmap.PixelHeight>bitmap.PixelWidth?90:0,AutoCrop=settings.AutoCrop,
                             Brightness=settings.Brightness,Contrast=settings.Contrast,
-                            BlankCandidate=settings.DetectBlank&&Imaging.Analyze(bitmap).Blank};
+                            BlankCandidate=(settings.DetectBlank||settings.RemoveBlank)&&Imaging.Analyze(bitmap).Blank};
                         await acquired(page);count++;
                     }
                 }

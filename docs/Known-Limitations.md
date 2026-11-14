@@ -19,3 +19,7 @@
 Release gates: successful Windows tests, actual device matrix, no-.NET clean-machine startup for both architectures, complete license/source review, performance measurements.
 
 Runtime inventory: the main application is published with .NET/WPF 10.0.15. The unmodified upstream NAPS2 Win32 worker is a separate self-contained binary and embeds .NET 10.0.9; updating the main runtime does not update that embedded worker runtime. Rebuilding or replacing the worker requires separate Windows compatibility validation.
+
+## 1.1.0 new integration boundary
+
+ERPNext actions require installing/configuring the supplied bridge and API account separately; no live site deployment/test was performed. Target Frappe v15 source contracts were reviewed, but server version, private-file hooks, permissions, database and Redis retry semantics need staging acceptance. HTTPS with valid TLS is required. Per-file bridge limit is 20 MiB and site limits may be lower. WPF layout and interactive crop/profile flows require Windows/scaling smoke tests; source-level and automated checks do not establish pixel equivalence with design images.

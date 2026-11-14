@@ -41,7 +41,7 @@ public sealed class ScanSettingsSelection : INotifyPropertyChanged
         get=>current.Paper;
         set{if(!refreshing&&Papers.Contains(value)&&value!=current.Paper){current=current with{Paper=value};Changed(nameof(Paper));}}
     }
-    public ScanSettings ApplyCapabilities(ScannerCapabilities? caps,ScanSettings requested)
+    public ScanSettings ApplyCapabilities(ScannerCapabilities? caps,ScanSettings requested,bool preserveUnsupported=false)
     {
         requested.Validate();
         var warnings=new List<string>();
@@ -64,6 +64,12 @@ public sealed class ScanSettingsSelection : INotifyPropertyChanged
         else if(!colors.Contains(color)){color=colors[0];warnings.Add($"Saved color mode {requested.Color} is not supported for {source}; using {color}.");}
         if(!papers.Contains(paper)){paper=papers[0];warnings.Add($"Saved paper size {requested.Paper} is not available for {source}; using {paper}.");}
         var effective=requested with{Source=source,Dpi=dpi,Color=color,Paper=paper,NativeUi=requested.NativeUi||caps is {Known:false}};
+        if(preserveUnsupported)
+        {
+            effective=requested;
+            sources=sources.Append(requested.Source).Distinct().ToArray();dpis=dpis.Append(requested.Dpi).Distinct().Order().ToArray();colors=colors.Append(requested.Color).Distinct().ToArray();papers=papers.Append(requested.Paper).Distinct().ToArray();
+            warnings=warnings.Select(w=>w.Contains("; using ")?w.Split("; using ")[0]+". Saved value retained; explicitly choose a supported value.":w).ToList();
+        }
         refreshing=true;
         try
         {
