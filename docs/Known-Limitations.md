@@ -1,6 +1,6 @@
 # Known limitations and release gates
 
-- Hardware compatibility, WPF runtime UI, native scanner dialogs and clean Windows deployment require physical Windows testing. Neither USB nor network devices have been tested here.
+- Hardware compatibility, full application UI, native scanner dialogs and clean Windows deployment require manual testing. WPF ComboBox bindings and image/PDF codecs passed the 9-test Windows CI integration suite; USB and network scanner hardware remain untested.
 - Capabilities may be incomplete or incorrect. Duplex/ADF availability follows reported capabilities. Unknown capabilities require native UI; the app does not claim automatic duplex support.
 - Auto paper uses maximum reported scan area, with A4 fallback. Content cropping is reversible and adapts to background brightness; it can also detect a light document on a dark platen. It is a heuristic, not a guarantee for every paper/background.
 - Brightness/contrast are SDK post-scan adjustments. Actual results and supported modes require validation per backend.

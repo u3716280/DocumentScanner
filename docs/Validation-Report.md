@@ -1,13 +1,15 @@
 # Validation report — 14 November 2026
 
-Status: **Buildable validation candidate; Windows runtime and hardware acceptance pending.**
+Status: **Windows CI passed; physical scanner and full manual application acceptance pending.**
+
+Current Windows evidence: https://github.com/u3716280/DocumentScanner/actions/runs/43581943815 (code commit 4afc14d6655e8b1c86b59f724c6bb54b8a2bbb9a). Earlier authoring notes below describe Linux-only checks before this run.
 
 | Check | Observed result |
 |---|---|
 | SDK | .NET SDK 10.0.404 Linux x64; downloaded archive verified using SHA-512 from official .NET release metadata |
 | Solution compilation | PASS, 7 projects, 0 warnings, 0 errors |
-| Unit tests | PASS, 60 passed, 0 failed, 0 skipped |
-| Windows image/PDF integration tests | Compiled; execution unavailable on Linux (Microsoft.WindowsDesktop.App required). No pass claimed |
+| Unit tests | PASS, 60 passed, 0 failed, 0 skipped on Windows CI (also passed on Linux) |
+| Windows image/PDF and WPF binding integration tests | PASS, 9 passed, 0 failed, 0 skipped on windows-2022 |
 | win-x64 self-contained publish | PASS |
 | win-x86 self-contained publish | PASS |
 | PE architecture checks | PASS for app EXE, CoreCLR, x86 worker and matching PDFium native DLL |
@@ -17,16 +19,16 @@ Status: **Buildable validation candidate; Windows runtime and hardware acceptanc
 | UI resource name | Compiled `DocumentScanner.App.Resources.Strings.resources` verified in assembly |
 | Package ZIP integrity | Checked after packaging |
 | Native PDFium | x64 binary matched upstream Chromium 7947 release byte-for-byte; corresponding native license notices included |
-| Windows UI launch | NOT TESTED |
+| Full application UI launch/manual operation | NOT TESTED; WPF ComboBox bindings were exercised by CI |
 | USB/WIA/TWAIN/eSCL scanning | NOT TESTED with physical hardware |
 | ADF/duplex, jam/disconnection | NOT TESTED with physical hardware |
 | 100-page/600-DPI memory measurements | NOT TESTED |
 | Standard-user clean Windows with no .NET | NOT TESTED |
-| GitHub Actions execution | Workflow authored; not run or uploaded to a repository in this session |
+| GitHub Actions execution | PASS: restore, build, 60 unit tests, 9 Windows integration tests, x64/x86 publish, package checks and artifact upload |
 
 Unit coverage includes invalid Windows filenames, Unicode filenames, numbering, delete/reorder/rotation/crop/clear/Undo, preservation of new pages across Undo, state transitions, invalid/null settings, configuration backup/round-trip, collision-safe file finalization and session recovery/path containment.
 
-Nine Windows integration cases are provided (including a WPF ComboBox profile restoration case and three crop cases for JPG, PNG and PDF): JPG and PNG rotation/file count, PDF order and original physical dimensions, A4 fitting and blank-page non-destructive review, and cancelled PDF not being finalized. These require Windows to execute.
+Nine Windows integration cases are provided (including a WPF ComboBox profile restoration case and three crop cases for JPG, PNG and PDF): JPG and PNG rotation/file count, PDF order and original physical dimensions, A4 fitting and blank-page non-destructive review, and cancelled PDF not being finalized. These passed on the Windows GitHub Actions runner.
 
 The portable packages were cross-published on Linux. Successful compilation and static dependency checks do not prove runtime scanner compatibility. Follow Hardware-Tests.md before treating the application as production-ready.
 
@@ -45,3 +47,9 @@ Twelve additional unit cases test the production ScanSettingsSelection component
 The ViewModel uses the tested selection component, reads device capabilities before applying the saved profile, and binds the four ComboBoxes through nullable selection properties. Transient nulls cannot become Flatbed/Color/0 defaults. The model restores target notifications after deferred null selections. Saved profile records remain unchanged when unsupported values require an explicitly reported runtime fallback.
 
 A Windows-only test uses actual WPF ComboBoxes with two-way bindings and dispatcher drains to check repeated profile restoration. It is compiled but has not run in this Linux environment. No Windows UI or physical-device pass is claimed.
+
+## First Windows CI run — 14 November 2026
+
+Windows portable build #1 succeeded on the unmodified v1.0.2 application source: 60/60 unit tests and 9/9 integration tests passed. The integration run includes actual WPF two-way ComboBox bindings with repeated profile restoration, PNG/JPG/PDF crop consistency, image orientation, PDF page size/order, blank-page handling and cancelled export. Both win-x64 and win-x86 self-contained packages, inventories and checksums were created and uploaded as the DocumentScanner-portable artifact. This supersedes the earlier compile-only Windows-test notes.
+
+No physical scanner, native scanner dialog, full application interaction, clean-machine no-.NET deployment or 100-page hardware performance claim is made.
