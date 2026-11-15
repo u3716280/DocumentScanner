@@ -98,8 +98,8 @@ public static class AttachmentPolicy
     }
     private static string Format(long bytes)=>$"{bytes/1024d/1024d:0.0} MiB";
 }
-public sealed class AttachmentRejectedException(string message) : InvalidDataException(message);
-public sealed class ArtifactChangedException(string message) : InvalidDataException(message);
+public sealed class AttachmentRejectedException(string message) : IOException(message);
+public sealed class ArtifactChangedException(string message) : IOException(message);
 public sealed class ErpRequestException(HttpStatusCode statusCode,string message) : InvalidOperationException(message)
 {public HttpStatusCode StatusCode{get;}=statusCode;}
 
