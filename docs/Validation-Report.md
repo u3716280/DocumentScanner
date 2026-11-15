@@ -1,3 +1,15 @@
+# Document Scanner 1.2.1 — delivery/PDF validation
+
+Status: Windows CI passed for application commit `b13729b49a51997c386674449f2f25ffb613f6ce`.
+
+- Run: https://github.com/u3716280/DocumentScanner/actions/runs/43713418612
+- 121/121 unit tests and 29/29 Windows integration tests passed.
+- Portable win-x64 and win-x86 packages were built with self-contained .NET/WPF 10.0.15 and passed PE architecture, TWAIN worker and PDFium checks.
+- Delivery checks cover exact/over 20 MiB boundaries, streamed form-compatible payload bytes, definitive HTTP rejection, unknown/permanent state handling, receipt-first retry and trailing-separator local folders.
+- PDF checks cover readable multipage output, page count/order, original/A4 dimensions in portrait and landscape, crop/original preservation, cancellation and a baseline three-page artifact below the Bridge limit.
+
+These automated checks do not establish that every real 300 DPI colour document will remain below 20 MiB. Oversized output is now reported as a terminal ERPNext failure without an impossible retry loop; PDF compression policy still requires representative-document measurement. Physical scanner and live ERPNext acceptance remain pending.
+
 # 1.2.0 Office workspace validation
 
 Status: Windows CI passed for application commit `2a497b6546998e92a01b601629fa7d4c0d094f25`.
