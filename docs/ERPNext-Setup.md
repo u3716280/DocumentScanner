@@ -44,9 +44,9 @@ Exported scanner profiles contain only the site reference/default DocType/privac
 
 ## Save and retry semantics
 
-- Save Local exports selected pages in their current order to the chosen folder. No ERPNext account or confirmation is required.
+- Save to folder exports selected pages in their current order to the chosen folder. No ERPNext account or confirmation is required.
 - Send to ERPNext creates frozen artifacts inside the recoverable session, without requiring a permanent local destination.
-- Save Local & Send renders once to a recoverable outbox, saves local copies first, then uploads those same frozen bytes. A local phase failure prevents upload; completed files survive and can be resumed without duplicate copies.
+- Save and send renders once to a recoverable outbox, saves local copies first, then uploads those same frozen bytes. A local phase failure prevents upload; completed files survive and can be resumed without duplicate copies.
 - Results report local paths and per-artifact upload state independently. Retry re-reads the document, requires fresh confirmation for the same session/site origin/account/DocType/name/privacy, and queries durable server receipts before re-sending. A changed local artifact hash is rejected.
 - A timeout is shown as Unknown, not assumed Failed. If reconciliation cannot complete, no blind upload occurs. A successful receipt is checked against target, privacy and SHA-256 content.
 - The bridge uses a per-user/key distributed lock, a database locking receipt read, a unique receipt name, and commits attachment+receipt before releasing the lock. Staging tests must cover concurrent retries, response loss, rollback hooks, record deletion and network interruption.

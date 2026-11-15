@@ -35,7 +35,7 @@ public sealed class RedesignTests
             end=DateTime.UtcNow.AddSeconds(10);while(vm.Busy&&DateTime.UtcNow<end)await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.False(vm.Busy);await Dispatcher.Yield(DispatcherPriority.ContextIdle);
             Assert.Equal(ScanSource.Duplex,vm.Source);Assert.Equal(600,vm.Dpi);Assert.Equal(ScanColor.Grayscale,vm.Color);Assert.Equal("POD",vm.FilenamePrefix);Assert.Equal(ExportFormat.Png,vm.OutputFormat);Assert.Contains(Descendants<TextBox>(window),box=>box.Text=="POD");
             var controls=Descendants<ComboBox>(window).ToArray();Assert.Contains(controls,c=>Equals(c.SelectedItem,600));Assert.Contains(controls,c=>Equals(c.SelectedItem,ScanSource.Duplex));Assert.Contains(controls,c=>Equals(c.SelectedItem,ScanColor.Grayscale));
-            var buttons=Descendants<Button>(window).ToArray();foreach(string text in new[]{"Save Local","Send to ERPNext","Save Local & Send to ERPNext"}){var b=Assert.Single(buttons,b=>Equals(b.Content,text));Assert.False(b.IsEnabled);}
+            var buttons=Descendants<Button>(window).ToArray();foreach(string text in new[]{"Save to folder","Send to ERPNext","Save and send"}){var b=Assert.Single(buttons,b=>Equals(b.Content,text));Assert.False(b.IsEnabled);}
             var options=ScanOptionsFactory.Create(device,profile.Settings);Assert.Equal(600,options.Dpi);Assert.Equal(0,options.Brightness);Assert.Equal(0,options.Contrast);
         }finally{Directory.Delete(root,true);}
     });

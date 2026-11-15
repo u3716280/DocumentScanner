@@ -11,6 +11,7 @@ Direct application package versions:
 | PdfPig | 0.1.11 | Apache-2.0; output PDF validation |
 | Microsoft.Extensions.DependencyInjection | 10.0.15 | MIT; service construction |
 | Microsoft.Extensions.Logging | 10.0.15 | MIT; logging abstractions and provider |
+| WPF-UI | 4.3.0 | MIT; Fluent control styles, window title bar and icon font for the application UI |
 
 Tests also use Microsoft.NET.Test.Sdk 17.14.1, xUnit 2.9.3, xUnit VS runner 2.8.2. Test tools are not deliberately included in application distributions.
 

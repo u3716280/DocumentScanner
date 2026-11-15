@@ -8,12 +8,12 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using DocumentScanner.Infrastructure;
 namespace DocumentScanner.App;
-public partial class MainWindow : Window
+public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly MainViewModel vm;private readonly AppPaths paths;private Point dragPoint;private double zoom=1;
     public MainWindow(MainViewModel vm,AppPaths paths)
     {
-        InitializeComponent();this.vm=vm;this.paths=paths;DataContext=vm;
+        ThemeResources.Ensure(this);InitializeComponent();this.vm=vm;this.paths=paths;DataContext=vm;
         vm.WindowHandle=()=>new WindowInteropHelper(this).Handle;
         vm.RestoreSelection=ids=>{
             PageList.SelectedItems.Clear();foreach(var page in vm.Pages.Where(p=>ids.Contains(p.Data.Id)))PageList.SelectedItems.Add(page);

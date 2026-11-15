@@ -4,12 +4,12 @@ Document Scanner 1.2.1 — Safe Delivery / หน้าจอ Office
 เลือกหน้าด้วยช่องเครื่องหมายถูกด้านซ้าย การบันทึกและส่งใช้เฉพาะหน้าที่เลือก
 Scan settings ใช้กับการสแกนครั้งถัดไป ส่วน Edit page ใช้กับหน้าที่เลือก กด Apply tone หลังปรับตัวเลข
 Original / Adjusted ใช้สลับดูภาพ ต้นฉบับจะไม่ถูกเขียนทับ
-Save Local = บันทึกลงเครื่อง, Send to ERPNext = ส่งอย่างเดียว, Save Local & Send to ERPNext = บันทึกก่อนแล้วส่ง
+Save to folder = บันทึกลงเครื่อง, Send to ERPNext = ส่งอย่างเดียว, Save and send = บันทึกก่อนแล้วส่ง
 ERPNext ต้องติดตั้ง Document Scanner Bridge บน site นั้นก่อน โปรแกรมมี Setup guide และ Test connection
 ต้องเลือกเอกสาร อ่านรายละเอียด และยืนยันทุกครั้งก่อนส่ง API credentials เก็บใน Windows Credential Manager
 อัปเกรดโดยปิดโปรแกรมและเก็บ Config / Sessions เดิมไว้ อย่าแตกไฟล์ทับระหว่างโปรแกรมกำลังทำงาน
 ถ้ามีงานส่ง ERPNext ค้าง โปรแกรมให้เลือก Retry/Reconcile, เก็บไว้ก่อน หรือ Abandon โดยจะเตือนหากผลเดิมเป็น Unknown
-ไฟล์แนบ ERPNext จำกัด 20 MiB ต่อไฟล์ ไฟล์ที่เกินจะไม่วน Retry; Save Local & Send ยังคงรายงานผล Local แยกจาก ERPNext
+ไฟล์แนบ ERPNext จำกัด 20 MiB ต่อไฟล์ ไฟล์ที่เกินจะไม่วน Retry; Save and send ยังคงรายงานผล Local แยกจาก ERPNext
 
 รายละเอียดและประวัติรุ่นก่อนหน้า:
 
@@ -68,7 +68,7 @@ Profile ที่รุ่นเก่าเคยบันทึกค่าเ
 - เลือก Profile บน toolbar หรือเปิด Manage profiles เพื่อสร้าง/Save/Save As/Rename/Delete/ตั้ง Default/Import/Export JSON
 - Profile เก็บ Scanner/Processing/Output/ERPNext ครบ กลไกโหลดตรวจความสามารถก่อนใช้ ไม่มีการแทน DPI/Source/Color ที่ไม่รองรับโดยเงียบ ๆ
 - Advanced scan defaults ใช้กับหน้าใหม่ ส่วน Selected pages ใช้แก้ภาพที่เลือกและต้องกด Apply tone
-- Save Local / Send to ERPNext / Save Local & Send to ERPNext ทำงานกับหน้าที่เลือกเท่านั้น
+- Save to folder / Send to ERPNext / Save and send ทำงานกับหน้าที่เลือกเท่านั้น
 - ส่ง ERPNext ต้องติดตั้ง document_scanner_bridge ฝั่งเซิร์ฟเวอร์ก่อน ดู ERPNext-Setup.md ใน source หรือแพ็กเกจ Bridge จาก GitHub Actions
 - ตั้ง Site/API credentials ผ่าน Manage profiles → ERPNext → Manage sites ไม่เก็บ secret ใน Profile JSON
 - ค้นหาเอกสาร ดูรายละเอียดจริง กด Confirm destination แล้วกด Send now แยกอีกครั้ง

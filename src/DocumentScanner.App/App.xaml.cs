@@ -13,6 +13,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // The accent is fixed in Themes/Office.xaml; do not let WPF UI replace it with the Windows accent.
+        Wpf.Ui.UiApplication.Current.ApplySystemAccentColor=false;
         singleInstance=new Mutex(true,@"Local\DocumentScanner-1.0",out bool first);
         if(!first){MessageBox.Show("Document Scanner is already running.");Shutdown();return;}
         var services=new ServiceCollection();services.AddSingleton<AppPaths>();services.AddSingleton<SettingsStore>();services.AddSingleton<SessionStore>();

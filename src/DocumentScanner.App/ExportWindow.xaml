@@ -9,5 +9,5 @@
  <CheckBox x:Name="FitBox" Content="{l:Loc FitPage}" IsChecked="True"/>
  <CheckBox x:Name="SelectedBox" Content="{l:Loc SelectedOnly}"/>
  <TextBlock x:Name="ValidationMessage" TextWrapping="Wrap" Foreground="#B03030" Margin="0,12"/>
- <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="{l:Loc Cancel}" IsCancel="True"/><Button Content="{l:Loc Export}" Click="SaveClick" IsDefault="True" Background="#2367D1" Foreground="White"/></StackPanel>
+ <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="{l:Loc Cancel}" IsCancel="True"/><Button Content="{l:Loc Export}" Click="SaveClick" IsDefault="True" Background="{DynamicResource LampBrush}" Foreground="White"/></StackPanel>
 </StackPanel></ScrollViewer></Window>
