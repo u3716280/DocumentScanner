@@ -37,7 +37,7 @@
                 <ui:SymbolIcon Symbol="Scan24"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.TrailingContent>
-                <ui:Button Content="Settings" Icon="{ui:SymbolIcon Settings24}" Appearance="Transparent" Click="SettingsClick" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Application settings and data folder"/>
+                <ui:Button Content="Settings" Icon="{ui:SymbolIcon Settings24}" Appearance="Transparent" BorderThickness="0" Click="SettingsClick" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Application settings and data folder"/>
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
@@ -73,14 +73,14 @@
                         <ui:Button Content="Cancel" Command="{Binding CancelCommand}" Visibility="{Binding Busy,Converter={StaticResource BoolVisibility}}" HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
                     </StackPanel>
                     <Border DockPanel.Dock="Bottom" Height="1" Background="{DynamicResource LineBrush}"/>
-                    <TabControl x:Name="SettingsTabs" IsEnabled="{Binding NotBusy}" Background="Transparent" BorderThickness="0" Margin="0,4,0,0">
+                    <TabControl x:Name="SettingsTabs" IsEnabled="{Binding NotBusy}" Background="Transparent" BorderThickness="0" Margin="8,4,0,0">
                         <TabItem Header="Scan settings">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel Margin="16,4,16,16">
+                                <StackPanel Margin="8,4,16,16">
                                     <TextBlock Text="Profile" Style="{DynamicResource FieldLabel}"/>
                                     <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Name" AutomationProperties.Name="Scanner profile"/>
                                     <TextBlock Text="{Binding ProfileState}" Style="{DynamicResource Caption}" Margin="0,4,0,0"/>
-                                    <ui:Button Content="Manage profiles" Command="{Binding ProfileManagerCommand}" Appearance="Transparent" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,2,0,0"/>
+                                    <ui:Button Content="Manage profiles" Command="{Binding ProfileManagerCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,2,0,0"/>
 
                                     <TextBlock Text="Scanner" Style="{DynamicResource FieldLabel}"/>
                                     <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayName" AutomationProperties.Name="Scanner device and driver" ToolTip="{Binding DeviceDetails}"/>
@@ -148,7 +148,7 @@
                         </TabItem>
                         <TabItem Header="Edit page">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel Margin="16,12,16,16">
+                                <StackPanel Margin="8,12,16,16">
                                     <TextBlock Text="{Binding SelectionSummary}" FontWeight="SemiBold"/>
                                     <TextBlock Text="Edits apply to the selected pages only." Style="{DynamicResource Caption}" Margin="0,4,0,0"/>
                                     <StackPanel IsEnabled="{Binding HasSelection}" Margin="0,8,0,0">
@@ -214,11 +214,11 @@
                                     <MenuItem Header="Rotate 180°" Command="{Binding Rotate180Command}"/>
                                 </MenuItem>
                             </Menu>
-                            <ui:Button Content="Crop" Icon="{ui:SymbolIcon Crop24}" Command="{Binding ManualCropCommand}" Appearance="Transparent" VerticalAlignment="Center" ToolTip="Manually crop one selected page"/>
-                            <ui:Button Content="Auto color" Icon="{ui:SymbolIcon Color24}" Command="{Binding AutoColorCommand}" Appearance="Transparent" VerticalAlignment="Center"/>
-                            <ui:Button Content="Undo" Icon="{ui:SymbolIcon ArrowUndo24}" Command="{Binding UndoCommand}" Appearance="Transparent" VerticalAlignment="Center"/>
+                            <ui:Button Content="Crop" Icon="{ui:SymbolIcon Crop24}" Command="{Binding ManualCropCommand}" Appearance="Transparent" BorderThickness="0" VerticalAlignment="Center" ToolTip="Manually crop one selected page"/>
+                            <ui:Button Content="Undo" Icon="{ui:SymbolIcon ArrowUndo24}" Command="{Binding UndoCommand}" Appearance="Transparent" BorderThickness="0" VerticalAlignment="Center"/>
                             <Menu Background="Transparent" VerticalAlignment="Center">
                                 <MenuItem Header="More">
+                                    <MenuItem Header="Auto color" Command="{Binding AutoColorCommand}"/>
                                     <MenuItem Header="Auto crop selected pages" Command="{Binding CropCommand}"/>
                                     <MenuItem Header="Reset crop" Command="{Binding ResetCropCommand}"/>
                                     <MenuItem Header="Reset Auto Color" Command="{Binding ResetColorCommand}"/>
@@ -235,7 +235,7 @@
                     </DockPanel>
                 </Border>
 
-                <Border Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource PaperBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,0,0,0">
+                <Border Grid.Row="1" Background="{DynamicResource PaperBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,0,0,0">
                     <DockPanel>
                         <Grid DockPanel.Dock="Top" Margin="12,8,8,4">
                             <Grid.ColumnDefinitions>
@@ -243,11 +243,11 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="{Binding PagesHeading}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                            <ui:Button Grid.Column="1" Content="All" Click="SelectAllClick" Appearance="Transparent" Foreground="{DynamicResource LampBrush}" Padding="6,3" ToolTip="Select all pages"/>
+                            <ui:Button Grid.Column="1" Content="All" Click="SelectAllClick" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="6,3" ToolTip="Select all pages"/>
                         </Grid>
                         <StackPanel DockPanel.Dock="Bottom" Margin="10,6,10,10">
                             <ui:Button Content="Import images…" Icon="{ui:SymbolIcon ImageAdd24}" Command="{Binding ImportCommand}" HorizontalAlignment="Stretch"/>
-                            <ui:Button Content="New document" Command="{Binding NewDocumentCommand}" Appearance="Transparent" Foreground="{DynamicResource LampBrush}" HorizontalAlignment="Stretch" Margin="0,4,0,0"/>
+                            <ui:Button Content="New document" Command="{Binding NewDocumentCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" HorizontalAlignment="Stretch" Margin="0,4,0,0"/>
                         </StackPanel>
                         <ListBox x:Name="PageList" ItemsSource="{Binding Pages}" SelectionMode="Extended" SelectionChanged="PagesChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" AllowDrop="True" PreviewMouseLeftButtonDown="DragStart" PreviewMouseMove="DragMove" Drop="PagesDrop" AutomationProperties.Name="Scanned pages; use checkboxes or Ctrl and Shift to select pages">
                             <ListBox.ItemContainerStyle>
@@ -365,7 +365,7 @@
                     </Rectangle>
                 </Grid>
 
-                <Border Grid.Row="2" Grid.Column="1" Background="{DynamicResource PaperBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,0,1,0" Padding="12,6">
+                <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{DynamicResource PaperBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,1,1,0" Padding="12,6">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -373,14 +373,14 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <RadioButton Content="Original" GroupName="PreviewMode" IsChecked="{Binding ShowOriginal,Mode=TwoWay}" Margin="0,0,12,0"/>
-                            <RadioButton Content="Adjusted" GroupName="PreviewMode" IsChecked="{Binding ShowAdjusted,Mode=TwoWay}"/>
+                            <RadioButton Content="Original" GroupName="PreviewMode" IsChecked="{Binding ShowOriginal,Mode=TwoWay}" MinWidth="0" Margin="0,0,16,0"/>
+                            <RadioButton Content="Adjusted" GroupName="PreviewMode" IsChecked="{Binding ShowAdjusted,Mode=TwoWay}" MinWidth="0"/>
                         </StackPanel>
                         <TextBlock Grid.Column="1" Text="{Binding PreviewInfo}" Style="{DynamicResource Caption}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" VerticalAlignment="Center" Margin="12,0" ToolTip="The original scan is kept. Edits are applied on top of it."/>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:Button Icon="{ui:SymbolIcon ZoomOut24}" Click="ZoomOutClick" Appearance="Transparent" ToolTip="Zoom out" AutomationProperties.Name="Zoom out"/>
-                            <ui:Button Content="Fit" Click="FitClick" Appearance="Transparent" ToolTip="Fit the page to the view" AutomationProperties.Name="Fit page to view"/>
-                            <ui:Button Icon="{ui:SymbolIcon ZoomIn24}" Click="ZoomInClick" Appearance="Transparent" ToolTip="Zoom in" AutomationProperties.Name="Zoom in"/>
+                            <ui:Button Icon="{ui:SymbolIcon ZoomOut24}" Click="ZoomOutClick" Appearance="Transparent" BorderThickness="0" ToolTip="Zoom out" AutomationProperties.Name="Zoom out"/>
+                            <ui:Button Content="Fit" Click="FitClick" Appearance="Transparent" BorderThickness="0" ToolTip="Fit the page to the view" AutomationProperties.Name="Fit page to view"/>
+                            <ui:Button Icon="{ui:SymbolIcon ZoomIn24}" Click="ZoomInClick" Appearance="Transparent" BorderThickness="0" ToolTip="Zoom in" AutomationProperties.Name="Zoom in"/>
                             <TextBlock x:Name="ZoomText" Text="100%" FontSize="12" MinWidth="40" TextAlignment="Right" VerticalAlignment="Center" Margin="6,0,0,0" ToolTip="Zoom relative to Fit"/>
                         </StackPanel>
                     </Grid>
@@ -392,7 +392,7 @@
             <Border Grid.Column="4" Background="{DynamicResource PaperBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,1,0,0">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Margin="16,12,16,16">
-                        <ui:Button Content="Retry pending delivery…" Command="{Binding RetryUploadCommand}" Appearance="Transparent" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,0,0,8" Visibility="{Binding HasPendingDelivery,Converter={StaticResource BoolVisibility}}"/>
+                        <ui:Button Content="Retry pending delivery…" Command="{Binding RetryUploadCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,0,0,8" Visibility="{Binding HasPendingDelivery,Converter={StaticResource BoolVisibility}}"/>
                         <ui:Button x:Name="SendErpButton" Content="Send to ERPNext" Icon="{ui:SymbolIcon Send24}" Appearance="Primary" Command="{Binding SendCommand}" HorizontalAlignment="Stretch" MinHeight="44" FontWeight="SemiBold" ToolTip="Choose an ERPNext document, review and confirm before uploading"/>
                         <ui:Button x:Name="SaveLocalButton" Content="Save to folder" Icon="{ui:SymbolIcon Folder24}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" MinHeight="38" Margin="0,8,0,0" ToolTip="Save selected pages to a local folder"/>
                         <ui:Button x:Name="SaveAndSendButton" Content="Save and send" Command="{Binding SaveAndSendCommand}" HorizontalAlignment="Stretch" MinHeight="38" Margin="0,8,0,0" ToolTip="Save selected pages locally first, then upload to a confirmed ERPNext document"/>
@@ -423,8 +423,8 @@
                                 <TextBlock Text="{Binding BridgeStatus}" Style="{DynamicResource Caption}" Margin="0,12,0,0"/>
                                 <TextBlock Text="Search and upload need the Document Scanner Bridge on your ERPNext site." Style="{DynamicResource Caption}" Margin="0,2,0,0"/>
                                 <ui:Button Content="Test connection" Icon="{ui:SymbolIcon PlugConnected24}" Command="{Binding TestErpConnectionCommand}" HorizontalAlignment="Stretch" Margin="0,10,0,0"/>
-                                <ui:Button Content="Setup guide" Command="{Binding BridgeGuideCommand}" Appearance="Transparent" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,6,0,0"/>
-                                <ui:Button Content="Manage sites / credentials" Command="{Binding ManageErpSitesCommand}" Appearance="Transparent" Foreground="{DynamicResource LampBrush}" Padding="0,4"/>
+                                <ui:Button Content="Setup guide" Command="{Binding BridgeGuideCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,6,0,0"/>
+                                <ui:Button Content="Manage sites / credentials" Command="{Binding ManageErpSitesCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
