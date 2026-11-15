@@ -19,7 +19,7 @@ public sealed class ErpConnectionErrorsTests
     public async Task ConnectionErrorsProvideActionableAdviceWithoutClaimingBridgeMissing(HttpStatusCode status,string expected)
     {
         using var client=new ErpClient(new ErpSite{Url="https://erp.example.com"},new("key","secret"),new Reply(status,""));
-        var error=await Assert.ThrowsAsync<InvalidOperationException>(()=>client.Connect(default));Assert.Contains(expected,error.Message);Assert.Contains("No scan data was discarded",error.Message);Assert.DoesNotContain("Bridge is not installed",error.Message);
+        var error=await Assert.ThrowsAsync<ErpRequestException>(()=>client.Connect(default));Assert.Equal(status,error.StatusCode);Assert.Contains(expected,error.Message);Assert.Contains("No scan data was discarded",error.Message);Assert.DoesNotContain("Bridge is not installed",error.Message);
     }
     [Fact]public async Task InvalidPingPayloadIsNotReportedAsConnected()
     {
