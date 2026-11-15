@@ -45,7 +45,7 @@ public sealed class OfficeWorkspaceTests
     }
     private static void Layout(MainWindow window,double width,double height)
     {
-        window.Width=width;window.Height=height;var content=(FrameworkElement)window.Content;content.Measure(new Size(width,height));content.Arrange(new Rect(0,0,width,height));content.UpdateLayout();
+        window.Width=width;window.Height=height;var content=(FrameworkElement)window.Content;content.Measure(new Size(width,height));content.Arrange(new Rect(0,0,width,height));content.UpdateLayout();content.UpdateLayout();
         foreach(string name in new[]{"ScanButton","SaveLocalButton","SendErpButton","SaveAndSendButton"})
         {
             var button=(Button)window.FindName(name);Assert.True(button.ActualWidth>30);Assert.True(button.ActualHeight>20);
@@ -73,10 +73,12 @@ public sealed class OfficeWorkspaceTests
             var session=(DocumentSession)typeof(MainViewModel).GetField("session",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(vm)!;string folder=store.Folder(session.Id);Directory.CreateDirectory(folder);
             foreach(int number in new[]{1,2,3}){var page=SamplePage(folder,number);session.Append(page);vm.Pages.Add(new(page,number,folder));}
             var list=(ListBox)window.FindName("PageList");list.SelectedItems.Add(vm.Pages[1]);await WaitPreview(vm);Assert.Equal("1 page selected",vm.SelectionSummary);Assert.Equal("Page 2 of 3",vm.PreviewTitle);Assert.Equal("Scan more",vm.ScanButtonText);Assert.True(vm.ScannerReady);Assert.True(vm.SaveCommand.CanExecute(null));Assert.True(vm.SendCommand.CanExecute(null));
+            var end=DateTime.UtcNow.AddSeconds(10);while(vm.Pages.Any(p=>p.Thumbnail==null)&&DateTime.UtcNow<end)await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.All(vm.Pages,p=>Assert.NotNull(p.Thumbnail));
+            var display=new SelectionDisplayConverter();Assert.Equal(profile.Name,display.Convert(profile,typeof(string),null!,CultureInfo.InvariantCulture));Assert.Equal(Device.DisplayName,display.Convert(Device,typeof(string),null!,CultureInfo.InvariantCulture));Assert.Equal("PDF",display.Convert(ExportFormat.Pdf,typeof(string),null!,CultureInfo.InvariantCulture));
             var tabs=(TabControl)window.FindName("SettingsTabs");Assert.Equal(new[]{"Scan settings","Edit page"},tabs.Items.Cast<TabItem>().Select(t=>t.Header?.ToString()).ToArray());
             Layout(window,1440,900);Capture(window,"02-review-1440");
             Layout(window,1280,800);Capture(window,"03-review-125-percent",1.25);
-            Layout(window,1000,700);Capture(window,"04-review-150-percent",1.5);
+            Layout(window,1000,700);var viewport=(ScrollViewer)window.FindName("PreviewScroll");Assert.True(viewport.ExtentWidth<=viewport.ViewportWidth+1);Capture(window,"04-review-150-percent",1.5);
             tabs.SelectedIndex=1;Layout(window,1440,900);Capture(window,"05-edit-page-1440");
             byte[] before=File.ReadAllBytes(Path.Combine(folder,session.Pages[1].OriginalFile));int scanBrightness=vm.Brightness;
             vm.PageBrightness=120;vm.PageContrast=-60;vm.ApplyPageToneCommand.Execute(null);await WaitPreview(vm);Assert.Equal(120,session.Pages[1].Brightness);Assert.Equal(-60,session.Pages[1].Contrast);Assert.Equal(scanBrightness,vm.Brightness);Assert.Equal(before,File.ReadAllBytes(Path.Combine(folder,session.Pages[1].OriginalFile)));

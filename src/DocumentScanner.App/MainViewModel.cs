@@ -162,7 +162,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
                     case StartupDiscoveryMode.DiscoverAll:await RefreshDevices();break;
                     case StartupDiscoveryMode.LoadDefaultProfile:
                         selectedProfile=plan.Profile;Changed(nameof(SelectedProfile));await LoadProfile();break;
-                    default:Status="Choose a saved profile, or use Reset Profile to search all devices.";break;
+                    default:Status="Choose a saved profile, or open Scanner connections → Find all scanners.";break;
                 }
             });
         }

@@ -24,7 +24,7 @@ public sealed partial class MainViewModel
         get{int index=session.Pages.ToList().FindIndex(p=>p.Id==selection.LastOrDefault());return index<0?"Document preview":$"Page {index+1} of {Pages.Count}";}
     }
     public string PreviewEmptyTitle=>Pages.Count==0?"Ready to scan":"Select a page to review";
-    public string PreviewEmptyHint=>Pages.Count==0?"Choose a profile and Scan, or import images to begin.":"Select pages in the list. Checked pages are included when you save or send.";
+    public string PreviewEmptyHint=>Pages.Count==0?"Choose a scanner or saved profile, then Scan. You can also import images.":"Select pages in the list. Checked pages are included when you save or send.";
     public bool ShowAdjusted{get=>!ShowOriginal;set=>ShowOriginal=!value;}
     private bool hasPendingDelivery;
     public bool HasPendingDelivery{get=>hasPendingDelivery;private set=>Set(ref hasPendingDelivery,value);}
