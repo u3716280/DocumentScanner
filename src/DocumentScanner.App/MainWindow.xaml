@@ -25,6 +25,38 @@
         <Grid.Resources>
             <BooleanToVisibilityConverter x:Key="BoolVisibility"/>
             <l:SelectionDisplayConverter x:Key="SelectionDisplay"/>
+            <!--
+                Page-list checkbox. Deliberately self-contained and without animations: page items are removed and
+                re-created on every edit, and a library style that is looked up through the tree is re-evaluated when
+                an item leaves it. With the theme held by the window (no Application), that tears down an animated
+                template mid-animation and throws.
+            -->
+            <Style x:Key="PageCheck" TargetType="CheckBox">
+                <Setter Property="Width" Value="20"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="Margin" Value="2,2,8,0"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CheckBox">
+                            <Border x:Name="Box" Background="White" BorderBrush="#8D98A5" BorderThickness="1.5" CornerRadius="4">
+                                <Path x:Name="Mark" Data="M 3.5 8.5 L 7 12 L 13.5 5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Visibility="Collapsed"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Box" Property="Background" Value="{DynamicResource LampBrush}"/>
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource LampBrush}"/>
+                                    <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource InkBrush}"/>
+                                    <Setter TargetName="Box" Property="BorderThickness" Value="2"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -286,7 +318,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
-                                        <CheckBox IsChecked="{Binding IsSelected,Mode=TwoWay,RelativeSource={RelativeSource AncestorType=ListBoxItem}}" VerticalAlignment="Top" ToolTip="Include this page in output" AutomationProperties.Name="Select page"/>
+                                        <CheckBox Style="{StaticResource PageCheck}" IsChecked="{Binding IsSelected,Mode=TwoWay,RelativeSource={RelativeSource AncestorType=ListBoxItem}}" VerticalAlignment="Top" ToolTip="Include this page in output" AutomationProperties.Name="Select page"/>
                                         <StackPanel Grid.Column="1">
                                             <Border Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Padding="3">
                                                 <Image Source="{Binding Thumbnail}" Height="112" Stretch="Uniform">
