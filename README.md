@@ -2,7 +2,7 @@
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI (v1.1.1):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43612441172): 111 unit tests, 27 Windows integration tests and portable x86/x64 packages. Bridge source and its independent Python CI now live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner tests remain pending.
+**Windows CI (v1.2.0):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43708990783): 116 unit tests, 28 Windows integration tests, portable x86/x64 packages and 5 actual WPF layout captures. Bridge source and independent Python CI live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner and live ERPNext acceptance remain pending.
 
 **Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
 

@@ -1,6 +1,15 @@
 # 1.2.0 Office workspace validation
 
-Status: implementation awaiting Windows CI validation. Do not infer physical scanner or live ERPNext acceptance from this change.
+Status: Windows CI passed for application commit `2a497b6546998e92a01b601629fa7d4c0d094f25`.
+
+- Run: https://github.com/u3716280/DocumentScanner/actions/runs/43708990783
+- 116/116 unit tests and 28/28 Windows integration tests passed.
+- Portable win-x64 and win-x86 packages were built and passed static package/dependency verification.
+- All five actual WPF captures were retrieved through the GitHub artifact connector and archive SHA-256 verified. Empty/review/edit and compact layout captures were inspected. This led to corrected collapsed ComboBox display names, more compact scan settings, non-transparent workspace background and viewport-based Fit sizing.
+- Main output actions remain in bounds at 1440×900, 1280×800 and 1000×700 logical sizes. The preview does not acquire a horizontal scrollbar at Fit in the compact fixture.
+- Retained startup tests verify profile-first discovery; the workspace fixture adds no extra device discovery/capability calls or automatic Bridge test.
+
+Physical scanner, interactive per-monitor DPI and live ERPNext acceptance remain pending. Static render-scale fixtures do not replace those checks.
 
 New checks cover default-profile startup without extra discovery, page selection/output summaries, selected-page tone reset without changing next-scan settings or original bytes, Original/Adjusted preview behavior, ERPNext HTTP advice and invalid connection payloads. CI emits actual WPF layout captures at 1440×900, 1280×800 (125% render), and 1000×700 (150% render), including empty, review and edit states. Rendered scale tests do not replace interactive per-monitor DPI testing on Windows hardware.
 
