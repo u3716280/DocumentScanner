@@ -12,7 +12,8 @@ public sealed partial class MainViewModel
     public bool ShowOriginal{get=>showOriginal;set{if(Set(ref showOriginal,value)){Changed(nameof(ShowAdjusted));_=SetSelectionAsync(Pages.Where(p=>selection.Contains(p.Data.Id)).ToArray());}}}
     private void NewDocument()
     {
-        if(Pages.Count>0){var answer=MessageBox.Show("Keep this session for recovery before starting a new document? Yes = keep, No = discard.","New document",MessageBoxButton.YesNoCancel);if(answer==MessageBoxResult.Cancel)return;if(answer==MessageBoxResult.Yes)store.Save(session);else store.Delete(session.Id);}
+        if(Pages.Count>0){var answer=MessageBox.Show("Keep this session for recovery before starting a new document? Yes = keep, No = discard.","New document",MessageBoxButton.YesNoCancel);if(answer==MessageBoxResult.Cancel)return;if(answer==MessageBoxResult.Yes)store.Save(session);else{if(!ConfirmDiscardSession(session.Id))return;store.Delete(session.Id);}}
+        else if(Directory.Exists(store.Folder(session.Id))){if(!ConfirmDiscardSession(session.Id))return;store.Delete(session.Id);}
         session=new();selection=[];Pages.Clear();Preview=null;PreviewInfo="";confirmation.Invalidate();RefreshPendingDelivery();Changed(nameof(PageSummary));RaiseCommands();
     }
     public RelayCommand SendCommand{get;}public RelayCommand SaveAndSendCommand{get;}public RelayCommand ProfileManagerCommand{get;}public RelayCommand RetryUploadCommand{get;}public RelayCommand ApplyPageToneCommand{get;}
@@ -25,6 +26,23 @@ public sealed partial class MainViewModel
     public string FilenamePrefix{get=>settings.Output.Prefix;set{settings=settings with{Output=settings.Output with{Prefix=value}};Changed();Changed(nameof(FilenamePreview));}}
     public string FilenamePreview{get{try{return OutputNaming.Resolve(settings.Output,DateTime.Now,1)+"."+OutputFormat.ToString().ToLowerInvariant();}catch(ArgumentException){return "Invalid filename prefix/pattern — review output settings";}}}
     private string JournalPath=>Path.Combine(store.Folder(session.Id),"upload-job.json");
+    private string JournalPathFor(Guid id)=>Path.Combine(store.Folder(id),"upload-job.json");
+    private bool ConfirmDiscardSession(Guid id)
+    {
+        string path=JournalPathFor(id);if(!File.Exists(path))return true;
+        try{if(DeliveryStatus.IsTerminal(JsonFiles.Read<UploadJournal>(path)))return true;}catch(Exception ex) when(ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidDataException){}
+        return MessageBox.Show("This session has an unfinished ERPNext delivery. Discarding it removes the frozen retry files. An Unknown upload may already exist in ERPNext.\n\nDiscard this session?","Pending ERPNext delivery",MessageBoxButton.YesNo,MessageBoxImage.Warning)==MessageBoxResult.Yes;
+    }
+    private void CleanupDeliveryFiles(Guid id)
+    {
+        string folder=store.Folder(id),outbox=Path.Combine(folder,"outbox"),journal=JournalPathFor(id);
+        if(Directory.Exists(outbox))Directory.Delete(outbox,true);if(File.Exists(journal))File.Delete(journal);
+    }
+    private bool ConfirmAbandon(UploadJournal journal)
+    {
+        string warning=journal.Items.Any(i=>i.State==UploadState.Unknown)?" At least one result is Unknown and may already exist in ERPNext; sending again can create a duplicate.":"";
+        return MessageBox.Show("Abandon this pending delivery and remove its retry files?"+warning,"Abandon pending delivery",MessageBoxButton.YesNo,MessageBoxImage.Warning)==MessageBoxResult.Yes;
+    }
     private async Task ManageProfiles()
     {
         confirmation.Invalidate();var current=SelectedDevice==null?null:new ScanProfile("New profile",SelectedDevice,CurrentSettings()){Output=settings.Output,Erp=settings.Erp};
@@ -58,7 +76,14 @@ public sealed partial class MainViewModel
         if(action!=SaveAction.Local&&File.Exists(JournalPath))
         {
             var previous=JsonFiles.Read<UploadJournal>(JournalPath);
-            if(previous.Items.Any(i=>i.State!=UploadState.Succeeded)||previous.NeedsLocal&&!previous.LocalComplete){if(MessageBox.Show("An unfinished job exists for this session. Yes: retry its frozen files. No: keep that job and cancel this new action.","Pending delivery",MessageBoxButton.YesNo)==MessageBoxResult.Yes)await RetryUpload();return;}
+            if(DeliveryStatus.IsTerminal(previous))CleanupDeliveryFiles(session.Id);
+            else
+            {
+                var choice=MessageBox.Show("An unfinished job exists for this session.\n\nYes = retry/reconcile its frozen files\nNo = abandon it and continue this new action\nCancel = keep it and stop","Pending delivery",MessageBoxButton.YesNoCancel,MessageBoxImage.Warning);
+                if(choice==MessageBoxResult.Yes){await RetryUpload();return;}
+                if(choice==MessageBoxResult.Cancel||!ConfirmAbandon(previous))return;
+                CleanupDeliveryFiles(session.Id);
+            }
         }
         string outbox=Path.Combine(store.Folder(session.Id),"outbox",Guid.NewGuid().ToString("N"));
         var legacy=settings with{OutputFolder=action==SaveAction.Erp?outbox:settings.Output.Folder,Format=settings.Output.Format,JpegQuality=settings.Output.JpegQuality};
@@ -70,8 +95,10 @@ public sealed partial class MainViewModel
         if(!ReviewSend(target,$"{chosen.Length} selected pages · {options.Format} · {options.BaseName}",action==SaveAction.LocalAndErp))return;
         // Render once into the recoverable session; both destinations use these frozen artifact bytes.
         var rendered=await StaTask.Run(()=>exporter.ExportAsync(chosen,store.Folder(session.Id),options with{Folder=outbox},null,Token));
-        if(rendered.Error!=null||rendered.Cancelled)throw new InvalidOperationException("Output preparation did not complete. Original pages are preserved; no upload started.");
-        var journal=new UploadJournal{Target=target,NeedsLocal=action==SaveAction.LocalAndErp,LocalFolder=action==SaveAction.LocalAndErp?options.Folder:null,LocalComplete=false,Items=rendered.Saved.Select(path=>new UploadItem{File=path,Hash=LocalDelivery.Hash(path)}).ToList()};
+        if(rendered.Error!=null||rendered.Cancelled){if(Directory.Exists(outbox))Directory.Delete(outbox,true);throw new InvalidOperationException("Output preparation did not complete. Original pages are preserved; no upload started.");}
+        var items=rendered.Saved.Select(path=>new UploadItem{File=path,Hash=LocalDelivery.Hash(path)}).ToList();
+        foreach(var item in items)try{AttachmentPolicy.Validate(item.File);}catch(AttachmentRejectedException ex){item.State=UploadState.Failed;item.Retryable=false;item.Error=ex.Message;}
+        var journal=new UploadJournal{Target=target,NeedsLocal=action==SaveAction.LocalAndErp,LocalFolder=action==SaveAction.LocalAndErp?options.Folder:null,LocalComplete=false,Items=items};
         JsonFiles.Write(JournalPath,journal);await Deliver(journal);
     }
     private async Task Deliver(UploadJournal journal)
@@ -86,6 +113,7 @@ public sealed partial class MainViewModel
         }catch(Exception e) when(e is not OutOfMemoryException){error=e is OperationCanceledException?"Cancelled. Retry will verify server results first.":e.Message;}
         var results=new SaveResultsWindow(journal.LocalFiles,journal.LocalError,journal,error){Owner=Application.Current.MainWindow};results.ShowDialog();RefreshPendingDelivery();RaiseCommands();
         if(results.RetryRequested&&!Token.IsCancellationRequested)await RetryUpload();
+        else if(DeliveryStatus.IsTerminal(journal))CleanupDeliveryFiles(session.Id);
     }
     private bool ReviewSend(ErpTarget target,string summary,bool localFirst)
     {
@@ -97,6 +125,7 @@ public sealed partial class MainViewModel
     private async Task RetryUpload()
     {
         var journal=JsonFiles.Read<UploadJournal>(JournalPath);if(journal.SchemaVersion!=1||journal.Target.SessionId!=session.Id)throw new InvalidDataException("Invalid delivery journal.");
+        if(!DeliveryStatus.HasRetryableWork(journal)){MessageBox.Show("This delivery has no retryable files. Start a new send operation.","Pending delivery",MessageBoxButton.OK,MessageBoxImage.Information);return;}
         // Journal paths must stay under this session, even if a manifest is edited externally.
         string root=Path.GetFullPath(store.Folder(session.Id))+Path.DirectorySeparatorChar;
         if(journal.Items.Any(i=>!Path.GetFullPath(i.File).StartsWith(root,StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("Unsafe retry artifact path.");

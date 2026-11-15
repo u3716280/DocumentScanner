@@ -71,9 +71,13 @@ public sealed partial class MainViewModel
     {
         try
         {
-            if(!File.Exists(JournalPath)){HasPendingDelivery=false;return;}
-            var job=JsonFiles.Read<UploadJournal>(JournalPath);
-            HasPendingDelivery=job.NeedsLocal&&!job.LocalComplete||job.Items.Any(i=>i.State!=UploadState.Succeeded);
+            if(!File.Exists(JournalPath))HasPendingDelivery=false;
+            else
+            {
+                var job=JsonFiles.Read<UploadJournal>(JournalPath);
+                if(DeliveryStatus.IsTerminal(job)){CleanupDeliveryFiles(session.Id);HasPendingDelivery=false;}
+                else HasPendingDelivery=DeliveryStatus.HasRetryableWork(job);
+            }
         }
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidDataException){HasPendingDelivery=true;}
         RetryUploadCommand.Raise();

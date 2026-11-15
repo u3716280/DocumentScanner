@@ -153,7 +153,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
                 {
                     var answer=MessageBox.Show($"{Text.Get("RecoveryPrompt")}\n\n{recovered.Pages.Count} {Text.Get("Pages")} · {recovered.Updated.LocalDateTime:g}",Text.Get("Recover"),MessageBoxButton.YesNoCancel,MessageBoxImage.Question);
                     if(answer==MessageBoxResult.Yes){session=new(recovered.Id);session.Restore(recovered.Pages);RefreshPages();break;}
-                    if(answer==MessageBoxResult.No)await Task.Run(()=>store.Delete(recovered.Id),Token);else break;
+                    if(answer==MessageBoxResult.No){if(ConfirmDiscardSession(recovered.Id))await Task.Run(()=>store.Delete(recovered.Id),Token);else break;}else break;
                 }
                 var plan=StartupDiscoveryPlan.Create(Profiles.ToList(),settings.DefaultProfileId);
                 log.LogInformation("Startup discovery mode={Mode}",plan.Mode);
@@ -240,7 +240,8 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     {
         if(SelectedDevice==null)throw new InvalidOperationException(Text.Get("NoScanner"));
         if(capabilities?.Known==true&&!Sources.Contains(Source))throw new InvalidOperationException("The selected source is not supported.");
-        capabilities=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(SelectedDevice,Token));
+        try{capabilities=await StaTask.Run(()=>scanner.GetCapabilitiesAsync(SelectedDevice,Token));}
+        catch(Exception ex) when(NativeUi&&ex is not OperationCanceledException){log.LogWarning(ex,"Capability preflight unavailable; continuing with native scanner dialog");capabilities=new([],false,Text.Get("NativeNotice"));}
         var issues=ProfileValidation.CapabilityIssues(CurrentSettings(),capabilities);
         if(issues.Count>0&&!(NativeUi&&ProfileValidation.OnlyUnknown(issues)))throw new InvalidOperationException(string.Join("\n",issues)+"\nReview scan settings or explicitly enable native UI for unknown capabilities.");
         if(!NativeUi&&(Dpis.Count==0||Colors.Count==0))throw new InvalidOperationException("No supported settings. Try the scanner's native dialog.");
@@ -386,9 +387,9 @@ public sealed partial class MainViewModel : Bindable,IDisposable
             {
                 var answer=MessageBox.Show(Text.Get("ClosePrompt"),Text.Get("Title"),MessageBoxButton.YesNoCancel,MessageBoxImage.Question);
                 if(answer==MessageBoxResult.Cancel)return false;
-                if(answer==MessageBoxResult.Yes)store.Save(session);else store.Delete(session.Id);
+                if(answer==MessageBoxResult.Yes)store.Save(session);else{if(!ConfirmDiscardSession(session.Id))return false;store.Delete(session.Id);}
             }
-            else store.Delete(session.Id);
+            else{if(!ConfirmDiscardSession(session.Id))return false;store.Delete(session.Id);}
             return true;
         }catch(Exception ex){log.LogError(ex,"Close persistence failed");MessageBox.Show("Unable to save the session. Check disk space before closing.",Text.Get("Error"));return false;}
     }

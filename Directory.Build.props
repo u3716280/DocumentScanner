@@ -1,2 +1,2 @@
-<Project><PropertyGroup><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><LangVersion>latest</LangVersion><EnableWindowsTargeting>true</EnableWindowsTargeting><Version>1.2.0</Version><RuntimeFrameworkVersion>10.0.15</RuntimeFrameworkVersion><Deterministic>true</Deterministic></PropertyGroup><ItemGroup><Using Include="System.IO"/></ItemGroup></Project>
+<Project><PropertyGroup><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><LangVersion>latest</LangVersion><EnableWindowsTargeting>true</EnableWindowsTargeting><Version>1.2.1</Version><RuntimeFrameworkVersion>10.0.15</RuntimeFrameworkVersion><Deterministic>true</Deterministic></PropertyGroup><ItemGroup><Using Include="System.IO"/></ItemGroup></Project>
 

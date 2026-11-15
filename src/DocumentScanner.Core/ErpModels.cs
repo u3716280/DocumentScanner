@@ -25,6 +25,7 @@ public sealed record UploadItem
     public string? Name{get;set;}
     public string? LocalDestination{get;set;}
     public UploadState State{get;set;}
+    public bool Retryable{get;set;}=true;
     public string? Receipt{get;set;}
     public string? Error{get;set;}
 }
@@ -38,4 +39,15 @@ public sealed record UploadJournal
     public string? LocalFolder{get;init;}
     public bool LocalComplete{get;set;}
     public string? LocalError{get;set;}
+}
+
+public static class DeliveryStatus
+{
+    public static bool HasRetryableWork(UploadJournal journal)=>
+        journal.NeedsLocal&&!journal.LocalComplete||
+        journal.Items.Any(item=>item.State is UploadState.Pending or UploadState.Unknown||item.State==UploadState.Failed&&item.Retryable);
+
+    public static bool IsTerminal(UploadJournal journal)=>
+        (!journal.NeedsLocal||journal.LocalComplete)&&
+        journal.Items.All(item=>item.State==UploadState.Succeeded||item.State==UploadState.Failed&&!item.Retryable);
 }

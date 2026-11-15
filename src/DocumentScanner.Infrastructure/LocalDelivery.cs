@@ -14,7 +14,9 @@ public static class LocalDelivery
                 if(Hash(item.File)!=item.Hash)throw new InvalidDataException("Frozen artifact changed.");
                 string original=Path.GetFileName(item.File),stem=Path.GetFileNameWithoutExtension(original),extension=Path.GetExtension(original);int number=0;
                 string candidate=item.LocalDestination??Path.Combine(journal.LocalFolder,original);
-                if(Path.GetFullPath(Path.GetDirectoryName(candidate)!)!=Path.GetFullPath(journal.LocalFolder))throw new InvalidDataException("Unsafe local retry path.");
+                string candidateFolder=Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetDirectoryName(candidate)!));
+                string configuredFolder=Path.TrimEndingDirectorySeparator(Path.GetFullPath(journal.LocalFolder));
+                if(!string.Equals(candidateFolder,configuredFolder,OperatingSystem.IsWindows()?StringComparison.OrdinalIgnoreCase:StringComparison.Ordinal))throw new InvalidDataException("Unsafe local retry path.");
                 while(File.Exists(candidate)&&Hash(candidate)!=item.Hash)candidate=Path.Combine(journal.LocalFolder,$"{stem} ({++number}){extension}");
                 item.LocalDestination=candidate;item.Name=Path.GetFileName(candidate);persist();
                 if(!File.Exists(candidate))

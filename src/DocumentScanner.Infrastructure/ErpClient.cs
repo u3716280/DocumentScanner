@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using DocumentScanner.Core;
 namespace DocumentScanner.Infrastructure;
@@ -24,8 +25,12 @@ public sealed class ErpClient : IDisposable
     {
         if(!new[]{"ping","search_documents","document","receipt","upload"}.Contains(method))throw new ArgumentException("Unknown bridge method.");
         using var body=new FormUrlEncodedContent(values??[]);
+        return await Post<T>(method,body,ct);
+    }
+    private async Task<T> Post<T>(string method,HttpContent body,CancellationToken ct)
+    {
         using var response=await http.PostAsync("api/method/document_scanner_bridge.api."+method,body,ct);
-        if(!response.IsSuccessStatusCode)throw new InvalidOperationException(ErpConnectionErrors.Describe(response.StatusCode));
+        if(!response.IsSuccessStatusCode)throw new ErpRequestException(response.StatusCode,ErpConnectionErrors.Describe(response.StatusCode));
         using var result=JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
         if(!result.RootElement.TryGetProperty("message",out var message))throw new InvalidDataException("Invalid bridge response.");
         return message.Deserialize<T>(json)??throw new InvalidDataException("Empty bridge response.");
@@ -42,10 +47,15 @@ public sealed class ErpClient : IDisposable
     private static Dictionary<string,string> Values(ErpTarget t,UploadItem i)=>new(){["key"]=i.Key,["doctype"]=t.DocType,["name"]=t.Name,["private"]=t.Private?"1":"0",["sha256"]=i.Hash,["revision"]=t.Revision};
     public async Task<ErpReceipt> Upload(ErpTarget target,UploadItem item,CancellationToken ct)
     {
-        var bytes=await File.ReadAllBytesAsync(item.File,ct);if(bytes.Length>20*1024*1024)throw new ArgumentException("Attachment exceeds the 20 MB bridge limit.");
-        string hash=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();if(hash!=item.Hash)throw new InvalidDataException("Retry artifact changed. Create a new save/send operation.");
-        var fields=Values(target,item);fields["filename"]=item.Name??Path.GetFileName(item.File);fields["content"]=Convert.ToBase64String(bytes);
-        return await Call<ErpReceipt>("upload",fields,ct);
+        AttachmentPolicy.Validate(item.File);
+        await using(var input=File.OpenRead(item.File))
+        {
+            string hash=Convert.ToHexString(await SHA256.HashDataAsync(input,ct)).ToLowerInvariant();
+            if(hash!=item.Hash)throw new ArtifactChangedException("Retry artifact changed. Create a new save/send operation.");
+        }
+        var fields=Values(target,item);fields["filename"]=item.Name??Path.GetFileName(item.File);
+        using var body=new StreamingFormFileContent(fields,"content",item.File);
+        return await Post<ErpReceipt>("upload",body,ct);
     }
     public void Dispose()=>http.Dispose();
 }
@@ -54,10 +64,12 @@ public static class UploadRunner
     public static async Task Run(UploadJournal journal,ErpClient client,Action persist,CancellationToken ct)
     {
         if(client.Site.Id!=journal.Target.SiteId||!string.IsNullOrEmpty(journal.Target.SiteOrigin)&&client.Site.Url!=journal.Target.SiteOrigin)throw new InvalidOperationException("Retry site differs from operation.");
+        var candidates=journal.Items.Where(i=>i.State!=UploadState.Succeeded&&(i.State!=UploadState.Failed||i.Retryable)).ToArray();
+        if(candidates.Length==0)return;
         var account=await client.Connect(ct);if(account.Account!=journal.Target.Account)throw new InvalidOperationException("Retry account differs from operation.");
         var current=await client.Document(journal.Target.DocType,journal.Target.Name,ct);
         if(current.Revision!=journal.Target.Revision)throw new InvalidOperationException("Document changed. Review and confirm it again before creating a new operation.");
-        foreach(var item in journal.Items.Where(i=>i.State!=UploadState.Succeeded))
+        foreach(var item in candidates)
         {
             ct.ThrowIfCancellationRequested();
             try{
@@ -67,9 +79,56 @@ public static class UploadRunner
                 if(string.IsNullOrWhiteSpace(receipt.FileId))throw new InvalidDataException("Missing attachment receipt.");
                 item.Receipt=receipt.FileId;item.State=UploadState.Succeeded;item.Error=null;persist();
             }catch(OperationCanceledException){item.State=UploadState.Unknown;item.Error="Interrupted. Verify server receipt before retry.";persist();throw;}
-            catch(Exception ex) when(ex is not OutOfMemoryException){item.State=UploadState.Unknown;item.Error="Not confirmed. Retry will verify the server receipt first.";persist();}
+            catch(Exception ex) when(ex is AttachmentRejectedException or ArtifactChangedException)
+            {item.State=UploadState.Failed;item.Retryable=false;item.Error=ex.Message;persist();}
+            catch(ErpRequestException ex)
+            {item.State=UploadState.Failed;item.Retryable=true;item.Error=ex.Message;persist();}
+            catch(Exception ex) when(ex is not OutOfMemoryException){item.State=UploadState.Unknown;item.Retryable=true;item.Error="Not confirmed. Retry will verify the server receipt first.";persist();}
         }
     }
+}
+
+public static class AttachmentPolicy
+{
+    public const long MaxBytes=20L*1024*1024;
+    public static void Validate(string file)
+    {
+        long bytes=new FileInfo(file).Length;
+        if(bytes>MaxBytes)throw new AttachmentRejectedException($"Attachment is {Format(bytes)}; the ERPNext Bridge limit is 20 MiB. Choose a smaller PDF or send fewer pages.");
+    }
+    private static string Format(long bytes)=>$"{bytes/1024d/1024d:0.0} MiB";
+}
+public sealed class AttachmentRejectedException(string message) : InvalidDataException(message);
+public sealed class ArtifactChangedException(string message) : InvalidDataException(message);
+public sealed class ErpRequestException(HttpStatusCode statusCode,string message) : InvalidOperationException(message)
+{public HttpStatusCode StatusCode{get;}=statusCode;}
+
+internal sealed class StreamingFormFileContent : HttpContent
+{
+    private readonly IReadOnlyDictionary<string,string> fields;private readonly string fileField,file;
+    public StreamingFormFileContent(IReadOnlyDictionary<string,string> fields,string fileField,string file)
+    {this.fields=fields;this.fileField=fileField;this.file=file;Headers.ContentType=new("application/x-www-form-urlencoded");}
+    protected override bool TryComputeLength(out long length){length=0;return false;}
+    protected override async Task SerializeToStreamAsync(Stream stream,TransportContext? context)
+    {
+        bool first=true;
+        foreach(var field in fields)
+        {
+            await WriteAscii(stream,$"{(first?"":"&")}{Uri.EscapeDataString(field.Key)}={Uri.EscapeDataString(field.Value)}");first=false;
+        }
+        await WriteAscii(stream,$"{(first?"":"&")}{Uri.EscapeDataString(fileField)}=");
+        await using var input=File.OpenRead(file);byte[] buffer=new byte[49155];int carry=0;
+        while(true)
+        {
+            int read=await input.ReadAsync(buffer.AsMemory(carry,buffer.Length-carry));if(read==0)break;
+            int total=carry+read,complete=total-total%3;
+            if(complete>0)await WriteBase64(stream,Convert.ToBase64String(buffer,0,complete));
+            carry=total-complete;if(carry>0)Buffer.BlockCopy(buffer,complete,buffer,0,carry);
+        }
+        if(carry>0)await WriteBase64(stream,Convert.ToBase64String(buffer,0,carry));
+    }
+    private static Task WriteAscii(Stream stream,string value)=>stream.WriteAsync(Encoding.ASCII.GetBytes(value)).AsTask();
+    private static Task WriteBase64(Stream stream,string value)=>WriteAscii(stream,value.Replace("+","%2B",StringComparison.Ordinal).Replace("/","%2F",StringComparison.Ordinal).Replace("=","%3D",StringComparison.Ordinal));
 }
 
 

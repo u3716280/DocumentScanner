@@ -1,4 +1,4 @@
-Document Scanner 1.2.0 — หน้าจอ Office
+Document Scanner 1.2.1 — Safe Delivery / หน้าจอ Office
 
 เลือก Profile และเครื่องสแกนที่แถบบน แล้วกด Scan ปุ่มเดียวกันจะเปลี่ยนเป็น Scan more เมื่อมีหน้าในเอกสาร
 เลือกหน้าด้วยช่องเครื่องหมายถูกด้านซ้าย การบันทึกและส่งใช้เฉพาะหน้าที่เลือก
@@ -8,6 +8,8 @@ Save Local = บันทึกลงเครื่อง, Send to ERPNext = �
 ERPNext ต้องติดตั้ง Document Scanner Bridge บน site นั้นก่อน โปรแกรมมี Setup guide และ Test connection
 ต้องเลือกเอกสาร อ่านรายละเอียด และยืนยันทุกครั้งก่อนส่ง API credentials เก็บใน Windows Credential Manager
 อัปเกรดโดยปิดโปรแกรมและเก็บ Config / Sessions เดิมไว้ อย่าแตกไฟล์ทับระหว่างโปรแกรมกำลังทำงาน
+ถ้ามีงานส่ง ERPNext ค้าง โปรแกรมให้เลือก Retry/Reconcile, เก็บไว้ก่อน หรือ Abandon โดยจะเตือนหากผลเดิมเป็น Unknown
+ไฟล์แนบ ERPNext จำกัด 20 MiB ต่อไฟล์ ไฟล์ที่เกินจะไม่วน Retry; Save Local & Send ยังคงรายงานผล Local แยกจาก ERPNext
 
 รายละเอียดและประวัติรุ่นก่อนหน้า:
 

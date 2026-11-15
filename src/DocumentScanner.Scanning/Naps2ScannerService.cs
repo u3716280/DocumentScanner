@@ -16,6 +16,7 @@ public sealed class Naps2ScannerService : IScannerService
     public Naps2ScannerService(ILogger<Naps2ScannerService>? logger=null)=>log=logger;
     private readonly SemaphoreSlim gate=new(1,1);
     private readonly WpfImageContext images=new();
+    private readonly Dictionary<string,(PageSize? Flatbed,PageSize? Feeder,PageSize? Duplex)> paperAreas=[];
     public async Task<(IReadOnlyList<DeviceInfo> Devices,IReadOnlyList<string> Warnings)> DiscoverAsync(CancellationToken ct)
     {
         await gate.WaitAsync(ct);
@@ -74,6 +75,7 @@ public sealed class Naps2ScannerService : IScannerService
         await gate.WaitAsync(ct);
         try {
             using var context=CreateContext();var caps=await new ScanController(context).GetCaps(Options(device),ct);
+            paperAreas[device.Key]=(caps.FlatbedCaps?.PageSizeCaps?.ScanArea,caps.FeederCaps?.PageSizeCaps?.ScanArea,caps.DuplexCaps?.PageSizeCaps?.ScanArea);
             var sources=new List<SourceCapabilities>();
             var paper=caps.PaperSourceCaps;
             foreach(var (source,allowed,values) in new[]{
@@ -110,13 +112,17 @@ public sealed class Naps2ScannerService : IScannerService
         try {
             Directory.CreateDirectory(folder);using var context=CreateContext(Path.Combine(folder,"worker-temp"));
             var options=ScanOptionsFactory.Create(device,settings,handle);
-            // Auto means maximum driver-reported scan area; it is not automatic document-edge detection.
-            options.PageSize=settings.Paper=="Auto"?(await new ScanController(context).GetCaps(options,ct)).FlatbedCaps?.PageSizeCaps?.ScanArea??PageSize.A4:PageSize.Parse(settings.Paper);
-            if(settings.Paper=="Auto"&&settings.Source!=ScanSource.Flatbed)
+            // Native UI owns paper selection. Non-native Auto uses one capability response for the selected source.
+            if(settings.Paper=="Auto"&&!settings.NativeUi)
             {
-                var caps=await new ScanController(context).GetCaps(options,ct);
-                options.PageSize=(settings.Source==ScanSource.Duplex?caps.DuplexCaps:caps.FeederCaps)?.PageSizeCaps?.ScanArea??options.PageSize;
+                if(!paperAreas.TryGetValue(device.Key,out var areas))
+                {
+                    var caps=await new ScanController(context).GetCaps(options,ct);
+                    areas=(caps.FlatbedCaps?.PageSizeCaps?.ScanArea,caps.FeederCaps?.PageSizeCaps?.ScanArea,caps.DuplexCaps?.PageSizeCaps?.ScanArea);paperAreas[device.Key]=areas;
+                }
+                options.PageSize=(settings.Source switch{ScanSource.Duplex=>areas.Duplex,ScanSource.Feeder=>areas.Feeder,_=>areas.Flatbed})??PageSize.A4;
             }
+            else if(settings.Paper!="Auto")options.PageSize=PageSize.Parse(settings.Paper);
             int count=0;
             try {
                 await foreach(var image in new ScanController(context).Scan(options,ct))

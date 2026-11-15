@@ -1,3 +1,14 @@
+## 1.2.1 — Safe ERPNext delivery and PDF boundaries
+
+- Add explicit retry/reconcile, keep and abandon choices for unfinished ERPNext deliveries; changed destinations start a new operation instead of reusing an idempotency key.
+- Warn before New document, recovery discard or application close removes a session with an unfinished or unknown delivery.
+- Classify definitive attachment/server rejection as Failed instead of Unknown. Attachments over the Bridge's 20 MiB limit are terminal and do not enter an impossible retry loop.
+- Stream form-encoded Base64 directly from disk, avoiding simultaneous full file, UTF-16 Base64 and encoded-body copies on x86.
+- Normalize Windows local retry folders, including a trailing separator and case-insensitive comparison.
+- Remove completed/terminal delivery outboxes and journals while preserving unresolved frozen artifacts.
+- Native scanner UI owns Auto paper selection; non-native Auto reads capabilities once for the selected source.
+- Add exact 20 MiB boundary, streamed payload, failure classification, trailing-folder and baseline multipage PDF tests.
+
 ## 1.2.0 — Office workspace
 
 - Office light theme and shared native WPF control styles; no new runtime UI library or hosted design account.

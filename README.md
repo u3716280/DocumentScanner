@@ -1,8 +1,8 @@
-# Document Scanner 1.2.0 — validation candidate
+# Document Scanner 1.2.1 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI (v1.2.0):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43708990783): 116 unit tests, 28 Windows integration tests, portable x86/x64 packages and 5 actual WPF layout captures. Bridge source and independent Python CI live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner and live ERPNext acceptance remain pending.
+**Previous Windows CI (v1.2.0):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43708990783): 116 unit tests, 28 Windows integration tests, portable x86/x64 packages and 5 actual WPF layout captures. The v1.2.1 validation run is recorded in `docs/Validation-Report.md`. Bridge source and independent Python CI live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner and live ERPNext acceptance remain pending.
 
 **Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
 
@@ -43,7 +43,7 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 ./build/Publish.ps1 -Runtime win-x86
 ```
 
-Output: `artifacts/DocumentScanner-v1.2.0-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
+Output: `artifacts/DocumentScanner-v1.2.1-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`; upload this source tree to the desired repository, then run **Windows portable build** from Actions. Repository: https://github.com/u3716280/DocumentScanner. The workflow runs on pushes to main; hardware testing still requires a physical scanner.
 
