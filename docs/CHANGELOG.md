@@ -8,6 +8,7 @@
 - Remove completed/terminal delivery outboxes and journals while preserving unresolved frozen artifacts.
 - Native scanner UI owns Auto paper selection; non-native Auto reads capabilities once for the selected source.
 - Add exact 20 MiB boundary, streamed payload, failure classification, trailing-folder and baseline multipage PDF tests.
+- Stop retaining portable packages on every push. Tag/manual packages expire after 14 days, test reports after 7 days and UI previews after 14 days; a controlled promotion workflow verifies checksums before publishing GitHub Release assets and can reclaim old Actions artifacts.
 
 ## 1.2.0 — Office workspace
 

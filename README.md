@@ -45,7 +45,7 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 
 Output: `artifacts/DocumentScanner-v1.2.1-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
-Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`; upload this source tree to the desired repository, then run **Windows portable build** from Actions. Repository: https://github.com/u3716280/DocumentScanner. The workflow runs on pushes to main; hardware testing still requires a physical scanner.
+Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`. Pushes and pull requests build and test without retaining a 240+ MiB portable package. Portable x64/x86 artifacts are produced only for a `v*` tag or a manual run with **publish_portable** enabled, and expire after 14 days. Promote validated packages to durable GitHub Releases with `.github/workflows/promote-release.yml`. Repository: https://github.com/u3716280/DocumentScanner. Hardware testing still requires a physical scanner.
 
 ## Data, privacy and recovery
 

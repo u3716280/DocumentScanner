@@ -1,0 +1,72 @@
+name: Promote validated portable release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful Windows build run containing DocumentScanner-portable
+        required: true
+        type: string
+      release_tag:
+        description: Release tag, for example v1.2.1
+        required: true
+        type: string
+      target_sha:
+        description: Exact validated source commit for the tag
+        required: true
+        type: string
+      cleanup_actions_artifacts:
+        description: Delete all Actions artifacts after the release assets are safe
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download validated portable artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.source_run_id }}
+        run: gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name DocumentScanner-portable --dir release-assets
+
+      - name: Verify release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find release-assets -type f -name '*.zip' | wc -l)" -ge 2
+          test "$(find release-assets -type f -name '*.sha256' | wc -l)" -ge 2
+          find release-assets -type f -name '*.sha256' -print0 | while IFS= read -r -d '' checksum; do
+            (cd "$(dirname "$checksum")" && sha256sum --check "$(basename "$checksum")")
+          done
+
+      - name: Create release and upload validated packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$TARGET_SHA" --title "DocumentScanner $RELEASE_TAG" --notes "Validated Windows portable packages from Actions run $SOURCE_RUN_ID. Includes win-x64, win-x86 and SHA-256 checksums. Physical scanner and live ERPNext acceptance remain required."
+          fi
+          find release-assets -type f \( -name '*.zip' -o -name '*.sha256' \) -print0 | xargs -0 gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Delete Actions artifacts after promotion
+        if: inputs.cleanup_actions_artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '.artifacts[].id' | while read -r artifact_id; do
+            gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id"
+          done
