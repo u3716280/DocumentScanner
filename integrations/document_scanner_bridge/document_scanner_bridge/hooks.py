@@ -1,6 +1,0 @@
-app_name = "document_scanner_bridge"
-app_title = "Document Scanner Bridge"
-app_publisher = "Document Scanner"
-app_description = "Verified document search and idempotent scanner attachments"
-app_email = "admin@example.com"
-app_license = "Proprietary"

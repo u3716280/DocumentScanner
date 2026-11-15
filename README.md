@@ -2,7 +2,7 @@
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI (v1.1.1):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43612441172): 111 unit tests, 27 Windows integration tests, 7 isolated bridge contract tests, portable x86/x64 packages and bridge source ZIP. Physical scanner tests remain pending.
+**Windows CI (v1.1.1):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43612441172): 111 unit tests, 27 Windows integration tests and portable x86/x64 packages. Bridge source and its independent Python CI now live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner tests remain pending.
 
 **Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
 
@@ -104,7 +104,7 @@ Manage profiles supports Create, Save, Save As, Rename, Delete, Default and JSON
 
 Save Local exports selected pages only. Send to ERPNext needs no permanent local output folder. The combined action completes local copies before upload, retains successes and journals per-file outcomes for retry. In-app search shows real document details and requires separate Confirm destination and Send now actions. A new/recovered session starts unconfirmed. API credentials are held in Windows Credential Manager, outside profile JSON.
 
-**ERPNext prerequisite:** install the companion `document_scanner_bridge` on an authorized staging site first. Source is under `integrations/document_scanner_bridge`; CI packages it as `DocumentScanner-ERPNext-Bridge-v1.1.0.zip`. See [setup and limitations](docs/ERPNext-Setup.md). The build does not deploy this app, configure credentials or establish live-site/hardware compatibility. The bridge contract tests use isolated fakes, not a running Frappe/Redis/database stack.
+**ERPNext prerequisite:** install the companion `document_scanner_bridge` on an authorized staging site first. Source, installation instructions and independent CI are in the private [document_scanner_bridge repository](https://github.com/u3716280/document_scanner_bridge). The Windows workflow no longer bundles a copy of the bridge. Existing bridge installations keep the same app name and API endpoints; see the bridge installation guide for migration from the earlier source ZIP. See [setup and limitations](docs/ERPNext-Setup.md). The build does not deploy this app, configure credentials or establish live-site/hardware compatibility. The bridge contract tests use isolated fakes, not a running Frappe/Redis/database stack.
 
 ## Faster initialization policy (1.1.1)
 

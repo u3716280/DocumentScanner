@@ -4,12 +4,22 @@ Local scanning/export works independently. ERPNext search, detail verification a
 
 ## Server installation (administrator, staging first)
 
-1. Download `DocumentScanner-ERPNext-Bridge-v1.1.0.zip` from the same GitHub Actions artifact as the Windows packages.
-2. Extract its `document_scanner_bridge` source directory into your bench's `apps/document_scanner_bridge` (the directory containing `pyproject.toml`).
-3. From the bench root, install it editable into the bench virtualenv: `./env/bin/pip install -e apps/document_scanner_bridge`.
-4. Add `document_scanner_bridge` as a line in `sites/apps.txt` if not already listed.
-5. Run `bench --site YOUR_SITE install-app document_scanner_bridge`, then `bench --site YOUR_SITE migrate` and restart the bench services in your normal deployment workflow.
-6. Configure a real HTTPS origin with a trusted certificate. The Windows client does not disable TLS validation or follow redirects with credentials.
+The bridge is maintained independently in the private [document_scanner_bridge repository](https://github.com/u3716280/document_scanner_bridge). The bench server needs authorized SSH read access to that repository.
+
+For a new installation, run from the bench root:
+
+```bash
+bench --site YOUR_SITE backup --with-files
+bench get-app --branch main git@github.com:u3716280/document_scanner_bridge.git
+bench --site YOUR_SITE install-app document_scanner_bridge
+bench --site YOUR_SITE migrate
+bench restart
+bench --site YOUR_SITE list-apps
+```
+
+If already installed from the old bundled ZIP, do not uninstall/reinstall the app. Follow the [existing-installation migration guide](https://github.com/u3716280/document_scanner_bridge/blob/main/docs/INSTALL.md) to preserve the site registration and data while replacing the source with a Git checkout. Updates and Python package artifacts are now managed in the bridge repository; Windows artifacts no longer contain the bridge ZIP.
+
+Configure a real HTTPS origin with a trusted certificate. The Windows client does not disable TLS validation or follow redirects with credentials.
 
 Target API design was checked against Frappe v15 source. Compatibility on the actual installed ERPNext/Frappe version, database, Redis lock behavior and file hooks still needs staging validation. Do not treat isolated contract tests as proof of a deployed site's behavior.
 
