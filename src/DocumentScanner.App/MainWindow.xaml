@@ -345,6 +345,8 @@
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding Busy}" Value="True"/>
+                                            <!-- Only in a window that is on screen: a repeating animation in a windowless host keeps the dispatcher from going idle. -->
+                                            <Condition Binding="{Binding IsLoaded,RelativeSource={RelativeSource Self}}" Value="True"/>
                                             <Condition Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="True"/>
                                         </MultiDataTrigger.Conditions>
                                         <Setter Property="Visibility" Value="Visible"/>
