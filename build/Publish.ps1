@@ -1,4 +1,4 @@
-param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='1.1.1')
+param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='1.2.0')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Push-Location $root
@@ -36,3 +36,4 @@ try {
     "$hash  $(Split-Path $zip -Leaf)"|Set-Content "$zip.sha256" -Encoding ascii
     Write-Output $zip
 } finally {Pop-Location}
+

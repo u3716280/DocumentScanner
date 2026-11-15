@@ -105,7 +105,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         SaveAndSendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.LocalAndErp)),()=>NotBusy&&selection.Count>0);
         NewDocumentCommand=Command(NewDocument);
         ProfileManagerCommand=Command(()=>_=Operation(ManageProfiles));
-        RetryUploadCommand=Command(()=>_=Operation(RetryUpload),()=>NotBusy&&File.Exists(JournalPath));
+        RetryUploadCommand=Command(()=>_=Operation(RetryUpload),()=>NotBusy&&HasPendingDelivery);
         ApplyPageToneCommand=Command(()=>Edit(()=>session.SetTone(selection,PageBrightness,PageContrast)),()=>NotBusy&&selection.Count>0);
         DeleteCommand=Command(()=>Edit(()=>{if(Confirm("ConfirmDelete"))session.Delete(selection);}),()=>NotBusy&&selection.Count>0);
         ClearCommand=Command(()=>Edit(()=>{if(Confirm("ConfirmClear"))session.Clear();}),()=>NotBusy&&Pages.Count>0);
@@ -127,6 +127,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         DefaultCommand=Command(()=>Edit(()=>{settings=settings with{DefaultDeviceKey=SelectedDevice!.Key};PersistSettings();Status=Text.Get("DefaultSaved");}),()=>NotBusy&&SelectedDevice!=null);
         ResetAdjustmentsCommand=Command(adjustments.Reset);
         ImportCommand=Command(()=>_=Operation(ImportImages));
+        InitializeWorkspace();
     }
     private RelayCommand Command(Action action,Func<bool>? can=null){var result=new RelayCommand(action,can??(()=>NotBusy));commands.Add(result);return result;}
     private void RaiseCommands(){foreach(var cmd in commands)cmd.Raise();}
@@ -165,7 +166,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
                 }
             });
         }
-        finally{initialized=true;log.LogInformation("Startup completed elapsed_ms={Elapsed}",Stopwatch.GetElapsedTime(started).TotalMilliseconds);}
+        finally{RefreshPendingDelivery();initialized=true;log.LogInformation("Startup completed elapsed_ms={Elapsed}",Stopwatch.GetElapsedTime(started).TotalMilliseconds);}
     }
     private async Task ResetProfileAndDiscover()
     {
@@ -356,7 +357,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         finally{changingDevices=false;}
         capabilities=caps;
         if(issues.Count>0)capabilities=null;
-        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};foreach(string property in new[]{nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
+        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};ResetBridgeStatus();foreach(string property in new[]{nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
         activeProfile=profile;ProfileName=profile.Name;confirmation.Invalidate();settings=settings with{LastDeviceKey=device.Key};PersistSettings();scannerAvailable=true;Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
     }
     private void DeleteProfile(){if(SelectedProfile is {} p&&Confirm("ProfileConfirm")){Profiles.Remove(p);SelectedProfile=null;Changed(nameof(SelectedProfile));PersistSettings();}}
@@ -393,3 +394,4 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     }
     public void Dispose(){cancellation?.Dispose();}
 }
+

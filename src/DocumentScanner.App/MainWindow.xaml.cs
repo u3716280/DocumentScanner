@@ -43,7 +43,7 @@ public partial class MainWindow : Window
     private void FitClick(object sender,RoutedEventArgs e){zoom=1;ApplyZoom();}
     private void ZoomInClick(object sender,RoutedEventArgs e){zoom=Math.Min(4,zoom*1.25);ApplyZoom();}
     private void ZoomOutClick(object sender,RoutedEventArgs e){zoom=Math.Max(0.25,zoom/1.25);ApplyZoom();}
-    private void ApplyZoom()=>PreviewContainer.LayoutTransform=new ScaleTransform(zoom,zoom);
+    private void ApplyZoom(){PreviewContainer.LayoutTransform=new ScaleTransform(zoom,zoom);ZoomText.Text=$"{zoom:P0}";}
     private void SettingsClick(object sender,RoutedEventArgs e)
     {
         var window=new Window{Title=Text.Get("ConfigTitle"),Width=480,Height=260,Owner=this,WindowStartupLocation=WindowStartupLocation.CenterOwner,ResizeMode=ResizeMode.NoResize};
@@ -52,3 +52,4 @@ public partial class MainWindow : Window
         var close=new Button{Content=Text.Get("Close")};close.Click+=(_,_)=>window.Close();panel.Children.Add(close);window.Content=panel;window.ShowDialog();
     }
 }
+

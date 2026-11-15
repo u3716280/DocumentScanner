@@ -26,6 +26,8 @@ jobs:
       - name: Unit tests
         run: dotnet test tests/DocumentScanner.UnitTests -c Release --no-build --logger "trx;LogFileName=unit.trx"
       - name: Windows image and PDF tests
+        env:
+          DOCUMENTSCANNER_UI_PREVIEW_DIR: ${{ github.workspace }}/ui-preview
         run: dotnet test tests/DocumentScanner.IntegrationTests -c Release --no-build --logger "trx;LogFileName=integration.trx"
       - name: Publish x64
         shell: pwsh
@@ -49,3 +51,11 @@ jobs:
         with:
           name: test-results
           path: tests/**/TestResults/*.trx
+
+      - name: Upload real WPF UI previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DocumentScanner-ui-preview
+          path: ui-preview/*.png
+          if-no-files-found: warn

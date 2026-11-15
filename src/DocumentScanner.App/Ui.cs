@@ -4,6 +4,13 @@ using System.Windows.Media;
 namespace DocumentScanner.App;
 internal static class Ui
 {
+    public static FrameworkElement BridgeNotice()
+    {
+        var content=new StackPanel();content.Children.Add(new TextBlock{Text="Document Scanner Bridge required",FontWeight=FontWeights.SemiBold});
+        content.Children.Add(Note("Install Document Scanner Bridge on this ERPNext site before searching documents or uploading scans. Local scanning and saving work independently."));
+        content.Children.Add(Button("Bridge setup guide",()=>System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(MainViewModel.BridgeSetupUrl){UseShellExecute=true})));
+        return new Border{Background=new SolidColorBrush(Color.FromRgb(234,242,255)),CornerRadius=new(4),Padding=new(12),Margin=new(0,8,0,12),Child=content};
+    }
     public static Button Button(string text,Action action,bool primary=false){var b=new Button{Content=text,MinHeight=36,Margin=new(4)};if(primary){b.Background=new SolidColorBrush(Color.FromRgb(7,93,232));b.Foreground=Brushes.White;}b.Click+=(_,_)=>{try{action();}catch(Exception ex){MessageBox.Show(ex.Message,"Document Scanner",MessageBoxButton.OK,MessageBoxImage.Warning);}};return b;}
     public static TextBlock Note(string text)=>new(){Text=text,TextWrapping=TextWrapping.Wrap,Margin=new(0,8,0,12),Foreground=new SolidColorBrush(Color.FromRgb(82,98,122))};
     public static TextBox Input(string text)=>new(){Text=text,MinHeight=32,Margin=new(0,3,0,10)};
@@ -14,3 +21,4 @@ internal static class Ui
     public static void Guard(Action action){try{action();}catch(Exception e){MessageBox.Show(e.Message,"Document Scanner",MessageBoxButton.OK,MessageBoxImage.Warning);}}
     public static async Task Guard(Func<Task> action){try{await action();}catch(Exception e){MessageBox.Show(e.Message,"Document Scanner",MessageBoxButton.OK,MessageBoxImage.Warning);}}
 }
+

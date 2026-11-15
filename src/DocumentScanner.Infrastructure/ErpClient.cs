@@ -25,12 +25,17 @@ public sealed class ErpClient : IDisposable
         if(!new[]{"ping","search_documents","document","receipt","upload"}.Contains(method))throw new ArgumentException("Unknown bridge method.");
         using var body=new FormUrlEncodedContent(values??[]);
         using var response=await http.PostAsync("api/method/document_scanner_bridge.api."+method,body,ct);
-        if(!response.IsSuccessStatusCode)throw new InvalidOperationException($"ERPNext HTTP {(int)response.StatusCode}. Check bridge installation, account permissions, document changes and connection. No scan data was discarded.");
+        if(!response.IsSuccessStatusCode)throw new InvalidOperationException(ErpConnectionErrors.Describe(response.StatusCode));
         using var result=JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
         if(!result.RootElement.TryGetProperty("message",out var message))throw new InvalidDataException("Invalid bridge response.");
         return message.Deserialize<T>(json)??throw new InvalidDataException("Empty bridge response.");
     }
-    public Task<ErpConnection> Connect(CancellationToken ct)=>Call<ErpConnection>("ping",ct:ct);
+    public async Task<ErpConnection> Connect(CancellationToken ct)
+    {
+        var result=await Call<ErpConnection>("ping",ct:ct);
+        if(string.IsNullOrWhiteSpace(result.Account)||string.IsNullOrWhiteSpace(result.Version)||result.DocTypes==null)throw new InvalidDataException("Invalid Bridge connection response. Verify the site URL and Bridge version.");
+        return result;
+    }
     public Task<ErpSearch> Search(string doctype,string query,string field,int start,CancellationToken ct)=>Call<ErpSearch>("search_documents",new(){["doctype"]=doctype,["query"]=query,["field"]=field,["start"]=start.ToString()},ct);
     public Task<ErpDocument> Document(string doctype,string name,CancellationToken ct)=>Call<ErpDocument>("document",new(){["doctype"]=doctype,["name"]=name},ct);
     public Task<ErpReceipt> Receipt(ErpTarget target,UploadItem item,CancellationToken ct)=>Call<ErpReceipt>("receipt",Values(target,item),ct);
@@ -65,4 +70,16 @@ public static class UploadRunner
             catch(Exception ex) when(ex is not OutOfMemoryException){item.State=UploadState.Unknown;item.Error="Not confirmed. Retry will verify the server receipt first.";persist();}
         }
     }
+}
+
+
+public static class ErpConnectionErrors
+{
+    public static string Describe(HttpStatusCode status)=>$"ERPNext HTTP {(int)status}. "+(status switch
+    {
+        HttpStatusCode.Unauthorized=>"Authentication failed. Check the API key and secret in Manage sites.",
+        HttpStatusCode.Forbidden=>"Access denied. Check this API user's permissions and Bridge access.",
+        HttpStatusCode.NotFound=>"Endpoint not found. Check the site URL and that Document Scanner Bridge is installed on this site.",
+        _=>"The request could not be completed. Check Bridge installation, permissions, document changes and the server connection."
+    })+" No scan data was discarded.";
 }

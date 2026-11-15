@@ -1,4 +1,4 @@
-# Document Scanner 1.1.1 — validation candidate
+# Document Scanner 1.2.0 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
@@ -118,3 +118,12 @@ Save Local exports selected pages only. Send to ERPNext needs no permanent local
 The first window frame is yielded before recovery/driver work; session inspection runs off the UI thread. Scan operations remain serialized with discovery. There is no parallel driver access or forced native-driver timeout. Fresh validation before an actual scan remains in place.
 
 Logs now record startup policy, total/recovery duration, each full-search backend duration, and targeted lookup/capability durations in milliseconds, without device IDs/endpoints or document contents. Total startup may include user recovery-dialog time. Reduced discovery/capability call counts are covered by automated tests; no measured wall-clock speedup on the user's hardware is claimed.
+
+
+## Office workspace (1.2.0)
+
+The main window follows the approved Scan → Review → Save / Send layout with an Office light palette. Choose a profile and scan using the single Scan/Scan more action. Select pages with their checkboxes (Ctrl/Shift selection is also supported). Scan settings apply to future scans; the Edit page tab changes only selected pages. Tone values are shown exactly; Apply tone is explicit. Original/Adjusted changes the preview mode and never overwrites acquired PNGs.
+
+The output strip always states the selected page count. Save Local writes to disk; Send to ERPNext opens destination verification; the combined action saves locally first. No destination is automatically confirmed. Bridge installation guidance is available in the workspace, profile and site screens. Test connection is explicit and is not run during initialization. Physical-scanner startup/performance and actual ERPNext deployment still require validation on the user's environment.
+
+Windows CI publishes real WPF layout captures in the separate `DocumentScanner-ui-preview` artifact, using fictional sample documents. These captures verify the implemented layout; the earlier mockup is a design reference, not a screenshot of the executable.

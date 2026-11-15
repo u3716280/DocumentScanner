@@ -1,3 +1,13 @@
+## 1.2.0 — Office workspace
+
+- Office light theme and shared native WPF control styles; no new runtime UI library or hosted design account.
+- One context-sensitive Scan/Scan more button, page selection checkboxes and explicit selection/output summaries.
+- Separate Scan settings and Edit page tabs, with exact tone values and explicit selected-page apply/reset.
+- Original/Adjusted preview modes and clearer local / ERPNext / combined save actions.
+- Bridge prerequisite notices and installation guide in workspace, ERPNext profile, site settings and destination search. Main-window Bridge checks are explicit; startup does not contact ERPNext.
+- Retry is visible only for unfinished session jobs. Existing session, profile-first discovery and non-destructive image paths are retained.
+- Windows CI captures real WPF empty/review/edit views and compact layouts at 100/125/150 percent render scale using fictional documents.
+
 # 1.1.1 — Profile-first initialization
 
 - First-use startup searches all backends; Default Profile startup resolves only its exact device/driver and reads capabilities once.
@@ -60,3 +70,4 @@ Windows UI/driver execution remains unverified in this Linux environment.
 - Add 17 detector/state regression cases (48 unit tests total) and 3 Windows export regression cases.
 
 Windows launch, physical scanner and Windows codec execution remain unverified here.
+

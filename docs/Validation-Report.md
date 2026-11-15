@@ -1,3 +1,13 @@
+# 1.2.0 Office workspace validation
+
+Status: implementation awaiting Windows CI validation. Do not infer physical scanner or live ERPNext acceptance from this change.
+
+New checks cover default-profile startup without extra discovery, page selection/output summaries, selected-page tone reset without changing next-scan settings or original bytes, Original/Adjusted preview behavior, ERPNext HTTP advice and invalid connection payloads. CI emits actual WPF layout captures at 1440×900, 1280×800 (125% render), and 1000×700 (150% render), including empty, review and edit states. Rendered scale tests do not replace interactive per-monitor DPI testing on Windows hardware.
+
+The existing image/export, scanner profile, recovery and delivery retry suite is retained. Native acquisition and initialization policy are unchanged. No live scanner, credentials or ERPNext site is connected by CI.
+
+Previous validation history follows.
+
 # Document Scanner 1.1.1 — Validation Report
 
 Status: **Windows CI passed; validation candidate.** Physical scanner, interactive Windows/scaling and live ERPNext deployment acceptance remain pending.
@@ -59,3 +69,4 @@ Automated startup cases verify:
 WPF yields before recovery/driver work and recovery inspection runs off the UI thread. Actual scan preflight validation and serialized scanner access remain in place. New logs record recovery/startup, each full-search backend, exact-target lookup and capability durations without device endpoints/IDs or document contents.
 
 These checks establish work ordering and call counts, **not a measured wall-clock startup speedup**. Cold/warm launches, network discovery, vendor initialization and actual hardware response still require the user's timing comparison. The unchanged ERPNext bridge remains version 1.1.0.
+

@@ -9,11 +9,11 @@ public sealed partial class MainViewModel
     private bool initialized;private readonly DestinationConfirmation confirmation=new();
     public RelayCommand NewDocumentCommand{get;}
     private bool showOriginal;
-    public bool ShowOriginal{get=>showOriginal;set{if(Set(ref showOriginal,value))_=SetSelectionAsync(Pages.Where(p=>selection.Contains(p.Data.Id)).ToArray());}}
+    public bool ShowOriginal{get=>showOriginal;set{if(Set(ref showOriginal,value)){Changed(nameof(ShowAdjusted));_=SetSelectionAsync(Pages.Where(p=>selection.Contains(p.Data.Id)).ToArray());}}}
     private void NewDocument()
     {
         if(Pages.Count>0){var answer=MessageBox.Show("Keep this session for recovery before starting a new document? Yes = keep, No = discard.","New document",MessageBoxButton.YesNoCancel);if(answer==MessageBoxResult.Cancel)return;if(answer==MessageBoxResult.Yes)store.Save(session);else store.Delete(session.Id);}
-        session=new();selection=[];Pages.Clear();Preview=null;PreviewInfo="";confirmation.Invalidate();Changed(nameof(PageSummary));RaiseCommands();
+        session=new();selection=[];Pages.Clear();Preview=null;PreviewInfo="";confirmation.Invalidate();RefreshPendingDelivery();Changed(nameof(PageSummary));RaiseCommands();
     }
     public RelayCommand SendCommand{get;}public RelayCommand SaveAndSendCommand{get;}public RelayCommand ProfileManagerCommand{get;}public RelayCommand RetryUploadCommand{get;}public RelayCommand ApplyPageToneCommand{get;}
     private int pageBrightness,pageContrast;
@@ -29,7 +29,7 @@ public sealed partial class MainViewModel
     {
         confirmation.Invalidate();var current=SelectedDevice==null?null:new ScanProfile("New profile",SelectedDevice,CurrentSettings()){Output=settings.Output,Erp=settings.Erp};
         var manager=new ProfileManagerWindow(settings with{Profiles=Profiles.ToList()},Devices.ToList(),SelectedProfile,current,value=>settingsStore.Save(value)){Owner=Application.Current.MainWindow};manager.ShowDialog();
-        settings=manager.ResultSettings;activeProfile=settings.Profiles.FirstOrDefault(p=>p.Id==activeProfile?.Id);Profiles.Clear();foreach(var p in settings.Profiles)Profiles.Add(p);selectedProfile=Profiles.FirstOrDefault(p=>p.Id==SelectedProfile?.Id);Changed(nameof(SelectedProfile));
+        settings=manager.ResultSettings;ResetBridgeStatus();activeProfile=settings.Profiles.FirstOrDefault(p=>p.Id==activeProfile?.Id);Profiles.Clear();foreach(var p in settings.Profiles)Profiles.Add(p);selectedProfile=Profiles.FirstOrDefault(p=>p.Id==SelectedProfile?.Id);Changed(nameof(SelectedProfile));
         if(manager.LoadRequested is {} chosen){SelectedProfile=Profiles.First(p=>p.Id==chosen.Id);await LoadProfile();}
         foreach(var property in new[]{nameof(ProfileState),nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
     }
@@ -48,6 +48,11 @@ public sealed partial class MainViewModel
         confirmation.Confirm(window.Target);return window.Target;
     }
     private async Task SaveActionAsync(SaveAction action)
+    {
+        try{await SaveActionCoreAsync(action);}
+        finally{confirmation.Invalidate();RefreshPendingDelivery();}
+    }
+    private async Task SaveActionCoreAsync(SaveAction action)
     {
         var chosen=session.Pages.Where(p=>selection.Contains(p.Id)).ToArray();if(chosen.Length==0)throw new ArgumentException("Select pages to save/send.");
         if(action!=SaveAction.Local&&File.Exists(JournalPath))
@@ -79,7 +84,7 @@ public sealed partial class MainViewModel
                 using var client=Client(journal.Target);Status="Verifying destination and attachment receipts…";await UploadRunner.Run(journal,client,Persist,Token);
             }
         }catch(Exception e) when(e is not OutOfMemoryException){error=e is OperationCanceledException?"Cancelled. Retry will verify server results first.":e.Message;}
-        var results=new SaveResultsWindow(journal.LocalFiles,journal.LocalError,journal,error){Owner=Application.Current.MainWindow};results.ShowDialog();RaiseCommands();
+        var results=new SaveResultsWindow(journal.LocalFiles,journal.LocalError,journal,error){Owner=Application.Current.MainWindow};results.ShowDialog();RefreshPendingDelivery();RaiseCommands();
         if(results.RetryRequested&&!Token.IsCancellationRequested)await RetryUpload();
     }
     private bool ReviewSend(ErpTarget target,string summary,bool localFirst)
@@ -101,3 +106,4 @@ public sealed partial class MainViewModel
         journal=journal with{Target=target};JsonFiles.Write(JournalPath,journal);await Deliver(journal);
     }
 }
+
