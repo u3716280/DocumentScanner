@@ -87,6 +87,16 @@ public sealed class OfficeWorkspaceTests
             list.SelectAll();await WaitPreview(vm);Assert.Equal("3 pages selected",vm.SelectionSummary);Assert.False(vm.ManualCropCommand.CanExecute(null));Assert.True(vm.CropCommand.CanExecute(null));Assert.Equal(before,File.ReadAllBytes(Path.Combine(folder,session.Pages[1].OriginalFile)));
             Assert.Equal(0,scanner.Discoveries);Assert.Equal(1,scanner.Lookups);Assert.Equal(1,scanner.Capabilities);
         }
-        finally{Directory.Delete(root,true);}
+        finally{await DeleteWhenReleased(root);}
     });
+    // A preview render started by the last selection change can still be reading a page file when the test ends.
+    // Wait briefly for it; a handle that is never released still fails the test.
+    private static async Task DeleteWhenReleased(string root)
+    {
+        for(int attempt=0;;attempt++)
+        {
+            try{Directory.Delete(root,true);return;}
+            catch(IOException) when(attempt<50){await Task.Delay(100);}
+        }
+    }
 }
