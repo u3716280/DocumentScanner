@@ -68,11 +68,13 @@ public sealed class OfficeWorkspaceTests
         try
         {
             var paths=new AppPaths(root);var settings=new SettingsStore(paths);var profile=new ScanProfile("Invoices · 300 DPI",Device,new());settings.Save(new(){Profiles=[profile],DefaultProfileId=profile.Id});using var scanner=new Scanner();var store=new SessionStore(paths);using var vm=new MainViewModel(scanner,new DocumentExporter(),settings,store,NullLogger<MainViewModel>.Instance);
-            var window=new MainWindow(vm,paths);await vm.InitializeAsync();Assert.Equal(0,scanner.Discoveries);Assert.Equal(1,scanner.Lookups);Assert.Equal(1,scanner.Capabilities);Assert.Equal("Bridge not checked",vm.BridgeStatus);Assert.Equal("Scan",vm.ScanButtonText);Assert.False(vm.HasPendingDelivery);
+            var window=new MainWindow(vm,paths);await vm.InitializeAsync();Assert.Equal(0,scanner.Discoveries);Assert.Equal(1,scanner.Lookups);Assert.Equal(1,scanner.Capabilities);Assert.False(vm.HasDestination);Assert.Equal(SaveActionRules.DirectLaunchMessage,vm.DirectLaunchHint);Assert.Equal("Scan",vm.ScanButtonText);Assert.False(vm.HasPendingDelivery);
             Layout(window,1440,900);Capture(window,"01-empty-1440");
             var session=(DocumentSession)typeof(MainViewModel).GetField("session",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(vm)!;string folder=store.Folder(session.Id);Directory.CreateDirectory(folder);
             foreach(int number in new[]{1,2,3}){var page=SamplePage(folder,number);session.Append(page);vm.Pages.Add(new(page,number,folder));}
-            var list=(ListBox)window.FindName("PageList");list.SelectedItems.Add(vm.Pages[1]);await WaitPreview(vm);Assert.Equal("1 page selected",vm.SelectionSummary);Assert.Equal("Page 2 of 3",vm.PreviewTitle);Assert.Equal("Scan more",vm.ScanButtonText);Assert.True(vm.ScannerReady);Assert.True(vm.SaveCommand.CanExecute(null));Assert.True(vm.SendCommand.CanExecute(null));
+            var list=(ListBox)window.FindName("PageList");list.SelectedItems.Add(vm.Pages[1]);await WaitPreview(vm);Assert.Equal("1 page selected",vm.SelectionSummary);Assert.Equal("Page 2 of 3",vm.PreviewTitle);Assert.Equal("Scan more",vm.ScanButtonText);Assert.True(vm.ScannerReady);Assert.True(vm.SaveCommand.CanExecute(null));
+            // Opened directly: only the folder save is offered. Sending needs a destination from an ERPNext scan link.
+            Assert.False(vm.SendCommand.CanExecute(null));Assert.False(vm.SaveAndSendCommand.CanExecute(null));Assert.Equal(Wpf.Ui.Controls.ControlAppearance.Primary,vm.SaveAppearance);
             var end=DateTime.UtcNow.AddSeconds(10);while(vm.Pages.Any(p=>p.Thumbnail==null)&&DateTime.UtcNow<end)await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.All(vm.Pages,p=>Assert.NotNull(p.Thumbnail));
             var display=new SelectionDisplayConverter();Assert.Equal(profile.Name,display.Convert(profile,typeof(string),null!,CultureInfo.InvariantCulture));Assert.Equal(Device.DisplayName,display.Convert(Device,typeof(string),null!,CultureInfo.InvariantCulture));Assert.Equal("PDF",display.Convert(ExportFormat.Pdf,typeof(string),null!,CultureInfo.InvariantCulture));
             var tabs=(TabControl)window.FindName("SettingsTabs");Assert.Equal(new[]{"Scan settings","Edit page"},tabs.Items.Cast<TabItem>().Select(t=>t.Header?.ToString()).ToArray());
@@ -80,6 +82,20 @@ public sealed class OfficeWorkspaceTests
             Layout(window,1280,800);Capture(window,"03-review-125-percent",1.25);
             Layout(window,1000,700);var viewport=(ScrollViewer)window.FindName("PreviewScroll");Assert.True(viewport.ExtentWidth<=viewport.ViewportWidth+1);Capture(window,"04-review-150-percent",1.5);
             tabs.SelectedIndex=1;Layout(window,1440,900);Capture(window,"05-edit-page-1440");
+            // Started from ERPNext: the destination is shown locked, Send becomes the primary action, and all three actions are offered.
+            tabs.SelectedIndex=0;
+            vm.ApplyDestination(new(){SiteId=Guid.NewGuid(),SiteOrigin="https://erp.example.com",Account="scanner.user@example.com",DocType="Purchase Invoice",DocName="ACC-PINV-2611-0042",Party="Northline Supply Co., Ltd.",Date="2026-11-16",Reference="IV6811-0123",Total="330.00",Currency="THB",Status="Unpaid",DocStatus=1});
+            Assert.True(vm.HasDestination);Assert.True(vm.CanUpload);Assert.True(vm.SendCommand.CanExecute(null));Assert.True(vm.SaveAndSendCommand.CanExecute(null));Assert.True(vm.SaveCommand.CanExecute(null));
+            Assert.Equal(Wpf.Ui.Controls.ControlAppearance.Primary,vm.SendAppearance);Assert.Equal(Wpf.Ui.Controls.ControlAppearance.Secondary,vm.SaveAppearance);
+            Assert.True(File.Exists(Path.Combine(folder,"destination.json")));Assert.DoesNotContain("secret",File.ReadAllText(Path.Combine(folder,"destination.json")),StringComparison.OrdinalIgnoreCase);
+            Layout(window,1440,900);Assert.Equal("ACC-PINV-2611-0042",((TextBlock)window.FindName("DestinationNumberText")).Text);Capture(window,"06-erpnext-destination-1440");
+            Layout(window,1000,700);Capture(window,"07-erpnext-destination-150-percent",1.5);
+            // A cancelled document keeps the pages and the folder save, and blocks both ERPNext actions with a stated reason.
+            vm.ApplyDestination(vm.Destination! with{DocStatus=2,Status="Cancelled"});
+            Assert.False(vm.CanUpload);Assert.False(vm.SendCommand.CanExecute(null));Assert.False(vm.SaveAndSendCommand.CanExecute(null));Assert.True(vm.SaveCommand.CanExecute(null));Assert.Equal(DocStatusRules.CancelledMessage,vm.DestinationWarning);
+            Layout(window,1440,900);Capture(window,"08-erpnext-destination-cancelled-1440");
+            vm.ApplyDestination(null);Assert.False(File.Exists(Path.Combine(folder,"destination.json")));Assert.False(vm.SendCommand.CanExecute(null));
+            tabs.SelectedIndex=1;Layout(window,1440,900);
             byte[] before=File.ReadAllBytes(Path.Combine(folder,session.Pages[1].OriginalFile));int scanBrightness=vm.Brightness;
             vm.PageBrightness=120;vm.PageContrast=-60;vm.ApplyPageToneCommand.Execute(null);await WaitPreview(vm);Assert.Equal(120,session.Pages[1].Brightness);Assert.Equal(-60,session.Pages[1].Contrast);Assert.Equal(scanBrightness,vm.Brightness);Assert.Equal(before,File.ReadAllBytes(Path.Combine(folder,session.Pages[1].OriginalFile)));
             vm.ResetPageToneCommand.Execute(null);await WaitPreview(vm);Assert.Equal(0,session.Pages[1].Brightness);Assert.Equal(0,session.Pages[1].Contrast);Assert.Equal(scanBrightness,vm.Brightness);

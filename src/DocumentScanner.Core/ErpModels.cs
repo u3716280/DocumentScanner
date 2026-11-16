@@ -94,6 +94,8 @@ public sealed record DeliveryJournal
     public ErpDestination? Destination{get;set;}
     /// <summary>Fingerprint of the selected pages, their order, their edits and the format. A different value is a new job.</summary>
     public required string Revision{get;init;}
+    /// <summary>The common file-name stem, kept so a retry can name files that have not reached any destination yet.</summary>
+    public string BaseName{get;init;}="";
     public List<Guid> PageIds{get;init;}=[];
     public required List<DeliveryItem> Items{get;init;}
     public string? LocalFolder{get;init;}

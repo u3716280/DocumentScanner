@@ -95,17 +95,19 @@ public sealed partial class MainViewModel : Bindable,IDisposable
             if(e.PropertyName==nameof(ScanSettingsSelection.Warnings))UpdateCapabilityWarning();
         };
         settings=settingsStore.Load();ApplySettings(settings.Scan);
+        // The 2.0 upgrade drops the sites of the removed Bridge integration; their stored API keys go with them.
+        foreach(Guid removed in settingsStore.RemovedSiteIds)WindowsCredentialStore.Delete(removed);
         PropertyChanged+=(_,e)=>{if(e.PropertyName!=nameof(ProfileState))Changed(nameof(ProfileState));};foreach(var p in settings.Profiles)Profiles.Add(p);
         ResetProfileCommand=Command(()=>_=Operation(ResetProfileAndDiscover));
         RefreshCommand=ResetProfileCommand;
         ScanCommand=Command(()=>_=Operation(Scan),()=>NotBusy&&SelectedDevice!=null&&scannerAvailable);
         CancelCommand=Command(()=>{cancellation?.Cancel();Status=Text.Get("Working");},()=>Busy&&cancellation is {IsCancellationRequested:false});
         SaveCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Local)),()=>NotBusy&&selection.Count>0);
-        SendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Erp)),()=>NotBusy&&selection.Count>0);
-        SaveAndSendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.LocalAndErp)),()=>NotBusy&&selection.Count>0);
+        SendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.Erp)),()=>SaveActionRules.Enabled(SaveAction.Erp,CanUpload,selection.Count>0,Busy));
+        SaveAndSendCommand=Command(()=>_=Operation(()=>SaveActionAsync(SaveAction.LocalAndErp)),()=>SaveActionRules.Enabled(SaveAction.LocalAndErp,CanUpload,selection.Count>0,Busy));
         NewDocumentCommand=Command(NewDocument);
         ProfileManagerCommand=Command(()=>_=Operation(ManageProfiles));
-        RetryUploadCommand=Command(()=>_=Operation(RetryUpload),()=>NotBusy&&HasPendingDelivery);
+        RetryUploadCommand=Command(()=>_=Operation(RetryDelivery),()=>NotBusy&&HasPendingDelivery);
         ApplyPageToneCommand=Command(()=>Edit(()=>session.SetTone(selection,PageBrightness,PageContrast)),()=>NotBusy&&selection.Count>0);
         DeleteCommand=Command(()=>Edit(()=>{if(Confirm("ConfirmDelete"))session.Delete(selection);}),()=>NotBusy&&selection.Count>0);
         ClearCommand=Command(()=>Edit(()=>{if(Confirm("ConfirmClear"))session.Clear();}),()=>NotBusy&&Pages.Count>0);
@@ -152,7 +154,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
                 foreach(var recovered in recoverable)
                 {
                     var answer=MessageBox.Show($"{Text.Get("RecoveryPrompt")}\n\n{recovered.Pages.Count} {Text.Get("Pages")} · {recovered.Updated.LocalDateTime:g}",Text.Get("Recover"),MessageBoxButton.YesNoCancel,MessageBoxImage.Question);
-                    if(answer==MessageBoxResult.Yes){session=new(recovered.Id);session.Restore(recovered.Pages);RefreshPages();break;}
+                    if(answer==MessageBoxResult.Yes){session=new(recovered.Id);session.Restore(recovered.Pages);RefreshPages();LoadDestination();break;}
                     if(answer==MessageBoxResult.No){if(ConfirmDiscardSession(recovered.Id))await Task.Run(()=>store.Delete(recovered.Id),Token);else break;}else break;
                 }
                 var plan=StartupDiscoveryPlan.Create(Profiles.ToList(),settings.DefaultProfileId);
@@ -170,7 +172,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     }
     private async Task ResetProfileAndDiscover()
     {
-        confirmation.Invalidate();activeProfile=null;selectedProfile=null;ProfileName="";
+        activeProfile=null;selectedProfile=null;ProfileName="";
         Changed(nameof(SelectedProfile));Changed(nameof(ProfileState));
         await RefreshDevices();
     }
@@ -182,7 +184,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         catch(Exception ex)
         {
             log.LogError(ex,"Operation failed");
-            Status=ex is ArgumentException or InvalidOperationException?ex.Message:
+            Status=ex is ArgumentException or InvalidOperationException or ErpException or DestinationBlockedException or ScanLinkException?ex.Message:
                 ex is UnauthorizedAccessException?"Access denied. Choose a writable folder.":ex is IOException?"File operation failed. Check free space and folder access.":ScannerErrors.Describe(ex);
             MessageBox.Show(Status,Text.Get("Error"),MessageBoxButton.OK,MessageBoxImage.Warning);
         }
@@ -328,7 +330,7 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         string name=ProfileName.Trim();if(name.Length==0||name.Length>80)throw new ArgumentException("Enter a profile name (1–80 characters).");
         var existing=Profiles.FirstOrDefault(p=>p.Name.Equals(name,StringComparison.OrdinalIgnoreCase));
         var snapshot=CurrentSettings();snapshot.Validate();
-        if(existing!=null)Profiles.Remove(existing);var profile=new ScanProfile(name,SelectedDevice!,snapshot){Id=existing?.Id??Guid.NewGuid(),Output=settings.Output,Erp=settings.Erp};Profiles.Add(profile);SelectedProfile=profile;Changed(nameof(SelectedProfile));PersistSettings();Status=Text.Get("ProfileSaved");
+        if(existing!=null)Profiles.Remove(existing);var profile=new ScanProfile(name,SelectedDevice!,snapshot){Id=existing?.Id??Guid.NewGuid(),Output=settings.Output};Profiles.Add(profile);SelectedProfile=profile;Changed(nameof(SelectedProfile));PersistSettings();Status=Text.Get("ProfileSaved");
     }
     private async Task LoadProfile()
     {
@@ -358,8 +360,8 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         finally{changingDevices=false;}
         capabilities=caps;
         if(issues.Count>0)capabilities=null;
-        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output,Erp=profile.Erp};ResetBridgeStatus();foreach(string property in new[]{nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
-        activeProfile=profile;ProfileName=profile.Name;confirmation.Invalidate();settings=settings with{LastDeviceKey=device.Key};PersistSettings();scannerAvailable=true;Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
+        ApplySettings(requested);capabilities=caps;UpdateCapabilityWarning();settings=settings with{Output=profile.Output};foreach(string property in new[]{nameof(OutputFormat),nameof(FilenamePrefix),nameof(FilenamePreview)})Changed(property);
+        activeProfile=profile;ProfileName=profile.Name;settings=settings with{LastDeviceKey=device.Key};PersistSettings();scannerAvailable=true;Status=issues.Count==0?"Profile loaded and validated":"Profile loaded — native settings require explicit verification";
     }
     private void DeleteProfile(){if(SelectedProfile is {} p&&Confirm("ProfileConfirm")){Profiles.Remove(p);SelectedProfile=null;Changed(nameof(SelectedProfile));PersistSettings();}}
     private async Task ImportImages()

@@ -427,9 +427,9 @@
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Margin="16,12,16,16">
                         <ui:Button Content="Retry pending delivery…" Command="{Binding RetryUploadCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,0,0,8" Visibility="{Binding HasPendingDelivery,Converter={StaticResource BoolVisibility}}"/>
-                        <ui:Button x:Name="SendErpButton" Content="Send to ERPNext" Icon="{ui:SymbolIcon Send24}" Appearance="Primary" Command="{Binding SendCommand}" HorizontalAlignment="Stretch" MinHeight="44" FontWeight="SemiBold" ToolTip="Choose an ERPNext document, review and confirm before uploading"/>
-                        <ui:Button x:Name="SaveLocalButton" Content="Save to folder" Icon="{ui:SymbolIcon Folder24}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" MinHeight="38" Margin="0,8,0,0" ToolTip="Save selected pages to a local folder"/>
-                        <ui:Button x:Name="SaveAndSendButton" Content="Save and send" Command="{Binding SaveAndSendCommand}" HorizontalAlignment="Stretch" MinHeight="38" Margin="0,8,0,0" ToolTip="Save selected pages locally first, then upload to a confirmed ERPNext document"/>
+                        <ui:Button x:Name="SendErpButton" Content="Send to ERPNext" Icon="{ui:SymbolIcon Send24}" Appearance="{Binding SendAppearance}" Command="{Binding SendCommand}" HorizontalAlignment="Stretch" MinHeight="44" FontWeight="SemiBold" ToolTip="Attach the selected pages to the ERPNext document shown above. You confirm before anything is sent."/>
+                        <ui:Button x:Name="SaveLocalButton" Content="Save to folder" Icon="{ui:SymbolIcon Folder24}" Appearance="{Binding SaveAppearance}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" MinHeight="38" Margin="0,8,0,0" ToolTip="Save selected pages to a local folder"/>
+                        <ui:Button x:Name="SaveAndSendButton" Content="Save and send" Command="{Binding SaveAndSendCommand}" HorizontalAlignment="Stretch" MinHeight="38" Margin="0,8,0,0" ToolTip="Save the selected pages to a folder first, then attach the same files to the ERPNext document"/>
                     </StackPanel>
                     <Border DockPanel.Dock="Bottom" Height="1" Background="{DynamicResource LineBrush}"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -450,15 +450,37 @@
                             <TextBlock Text="{Binding FilenamePreview}" Style="{DynamicResource Caption}" Margin="0,6,0,0" ToolTip="{Binding FilenamePreview}"/>
 
                             <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,18,0,14"/>
-                            <StackPanel IsEnabled="{Binding NotBusy}">
+                            <!-- Shown when the scan was started from ERPNext. Read-only: the destination cannot be changed here. -->
+                            <StackPanel Visibility="{Binding HasDestination,Converter={StaticResource BoolVisibility}}">
+                                <TextBlock Text="ERPNext destination" Style="{DynamicResource SectionTitle}"/>
+                                <Border BorderBrush="{DynamicResource LampBrush}" BorderThickness="3,0,0,0" Padding="12,2,0,2" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding DestinationType}" Style="{DynamicResource Caption}"/>
+                                        <TextBlock x:Name="DestinationNumberText" Text="{Binding DestinationNumber}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding DestinationParty}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                        <TextBlock Text="{Binding DestinationDetails}" Style="{DynamicResource Caption}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{Binding DestinationWarning}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,10,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <Trigger Property="Text" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding DestinationAccount}" Style="{DynamicResource Caption}" Margin="0,10,0,0"/>
+                                <ui:Button Content="Open document in ERPNext" Command="{Binding OpenDestinationCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,6,0,0"/>
+                            </StackPanel>
+                            <!-- Opened directly: sending is not available, and the reason is stated instead of a silent disabled button. -->
+                            <StackPanel Visibility="{Binding NoDestination,Converter={StaticResource BoolVisibility}}">
                                 <TextBlock Text="ERPNext" Style="{DynamicResource SectionTitle}"/>
-                                <TextBlock Text="Destination not confirmed" Margin="0,6,0,0"/>
-                                <TextBlock Text="Choose and confirm a document before each upload." Style="{DynamicResource Caption}" Margin="0,2,0,0"/>
-                                <TextBlock Text="{Binding BridgeStatus}" Style="{DynamicResource Caption}" Margin="0,12,0,0"/>
-                                <TextBlock Text="Search and upload need the Document Scanner Bridge on your ERPNext site." Style="{DynamicResource Caption}" Margin="0,2,0,0"/>
-                                <ui:Button Content="Test connection" Icon="{ui:SymbolIcon PlugConnected24}" Command="{Binding TestErpConnectionCommand}" HorizontalAlignment="Stretch" Margin="0,10,0,0"/>
-                                <ui:Button Content="Setup guide" Command="{Binding BridgeGuideCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,6,0,0"/>
-                                <ui:Button Content="Manage sites / credentials" Command="{Binding ManageErpSitesCommand}" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4"/>
+                                <TextBlock Text="{Binding DirectLaunchHint}" Style="{DynamicResource Caption}" Margin="0,6,0,0"/>
+                                <TextBlock Text="Saving to a folder works without ERPNext or a network connection." Style="{DynamicResource Caption}" Margin="0,8,0,0"/>
+                                <ui:Button Content="ERPNext settings" Click="SettingsClick" Appearance="Transparent" BorderThickness="0" Foreground="{DynamicResource LampBrush}" Padding="0,4" Margin="0,6,0,0"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

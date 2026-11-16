@@ -91,7 +91,7 @@ public static class UploadRunner
     /// as delivered instead of being sent a second time. That check is how a timeout is reconciled; the standard
     /// API has no operation id, so this narrows the chance of a duplicate but cannot rule it out.
     /// </summary>
-    public static async Task Run(DeliveryJournal journal, FrappeClient client, Action persist, CancellationToken ct)
+    public static async Task Run(DeliveryJournal journal, FrappeClient client, Action persist, CancellationToken ct, Action<int, int>? progress = null)
     {
         if (!journal.NeedsUpload) return;
         var target = journal.Destination ?? throw new InvalidOperationException("This job has no ERPNext destination.");
@@ -103,9 +103,11 @@ public static class UploadRunner
         if (!string.Equals(account, target.Account, StringComparison.OrdinalIgnoreCase)) throw new DestinationBlockedException($"This job was prepared as {target.Account}, but the stored credentials now belong to {account}. Nothing was sent.");
         long limit = await client.GetMaxFileSize(ct);
 
+        int number = 0;
         foreach (var item in candidates)
         {
             ct.ThrowIfCancellationRequested();
+            progress?.Invoke(++number, candidates.Length);
             // Before: nothing sent. Sending: the request is in flight. Verifying: ERPNext accepted it and the result is being confirmed.
             var phase = Phase.Before;
             bool wasUnknown = item.State == UploadState.Unknown;

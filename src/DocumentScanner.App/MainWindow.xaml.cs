@@ -46,10 +46,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void ApplyZoom(){PreviewContainer.LayoutTransform=new ScaleTransform(zoom,zoom);ZoomText.Text=$"{zoom:P0}";}
     private void SettingsClick(object sender,RoutedEventArgs e)
     {
-        var window=new Window{Title=Text.Get("ConfigTitle"),Width=480,Height=260,Owner=this,WindowStartupLocation=WindowStartupLocation.CenterOwner,ResizeMode=ResizeMode.NoResize};
-        var panel=new StackPanel{Margin=new Thickness(20)};panel.Children.Add(new TextBlock{Text=Text.Get("ConfigInfo"),TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,16)});
-        var open=new Button{Content=Text.Get("OpenFolder")};open.Click+=(_,_)=>Process.Start(new ProcessStartInfo(paths.Root){UseShellExecute=true});panel.Children.Add(open);
-        var close=new Button{Content=Text.Get("Close")};close.Click+=(_,_)=>window.Close();panel.Children.Add(close);window.Content=panel;window.ShowDialog();
+        vm.OpenSettings(paths.Root);
     }
 }
 

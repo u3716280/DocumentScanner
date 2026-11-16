@@ -118,3 +118,29 @@ public static class SiteOrigins
     /// <summary>The configured site this link belongs to, or null when the user has not allowed that site.</summary>
     public static ErpSite? Match(ScanLink link, IEnumerable<ErpSite> allowed) => allowed.FirstOrDefault(site => Same(site.Url, link.SiteOrigin));
 }
+
+public enum LaunchKind { None, Scan, Test, Invalid }
+
+/// <summary>What a set of command-line arguments, or a message forwarded from a second instance, asks for.</summary>
+public sealed record LaunchRequest(LaunchKind Kind, ScanLink? Link = null, string? Error = null)
+{
+    public const string TestUri = ScanLinkParser.Scheme + "://test";
+    public static readonly LaunchRequest None = new(LaunchKind.None);
+
+    /// <summary>
+    /// Only an argument that starts with the documentscanner scheme is looked at; anything else is ignored, so the
+    /// application never opens files or runs commands named on its command line.
+    /// </summary>
+    public static LaunchRequest From(IEnumerable<string?>? arguments)
+    {
+        string? uri = arguments?.FirstOrDefault(a => a != null && a.TrimStart().StartsWith(ScanLinkParser.Scheme + ":", StringComparison.OrdinalIgnoreCase))?.Trim();
+        if (uri == null) return None;
+        if (string.Equals(uri.TrimEnd('/'), TestUri, StringComparison.OrdinalIgnoreCase)) return new(LaunchKind.Test);
+        try { return new(LaunchKind.Scan, ScanLinkParser.Parse(uri)); }
+        catch (ScanLinkException e) { return new(LaunchKind.Invalid, Error: e.Message); }
+    }
+
+    /// <summary>The single line a second instance sends to the running one: the link itself, or empty to just bring it forward.</summary>
+    public static string ForwardMessage(IEnumerable<string?>? arguments) =>
+        arguments?.FirstOrDefault(a => a != null && a.TrimStart().StartsWith(ScanLinkParser.Scheme + ":", StringComparison.OrdinalIgnoreCase))?.Trim() ?? "";
+}
