@@ -39,13 +39,15 @@ public sealed class AppPaths
 public sealed class SettingsStore(AppPaths paths)
 {
     public string? LoadWarning {get;private set;}
+    /// <summary>Sites dropped by the 2.0 upgrade. The application deletes their stored credentials.</summary>
+    public IReadOnlyList<Guid> RemovedSiteIds {get;private set;}=[];
     private bool newerSchema;
     public AppSettings Load()
     {
         if(!File.Exists(paths.Config))return new();
         try {
             using(var check=JsonDocument.Parse(File.ReadAllText(paths.Config))){
-                if(check.RootElement.TryGetProperty("SchemaVersion",out var schema)&&schema.GetInt32()>1||check.RootElement.TryGetProperty("Profiles",out var profiles)&&profiles.EnumerateArray().Any(p=>p.TryGetProperty("SchemaVersion",out var v)&&v.GetInt32()>2)){newerSchema=true;LoadWarning="Settings contain a newer unsupported schema. The original file is preserved and settings writes are blocked. Use a compatible application version.";return new();}
+                if(check.RootElement.TryGetProperty("SchemaVersion",out var schema)&&schema.GetInt32()>AppSettings.CurrentSchema||check.RootElement.TryGetProperty("Profiles",out var profiles)&&profiles.EnumerateArray().Any(p=>p.TryGetProperty("SchemaVersion",out var v)&&v.GetInt32()>2)){newerSchema=true;LoadWarning="Settings contain a newer unsupported schema. The original file is preserved and settings writes are blocked. Use a compatible application version.";return new();}
             }
             var value=JsonFiles.Read<AppSettings>(paths.Config);
             using var raw=JsonDocument.Parse(File.ReadAllText(paths.Config));
@@ -55,7 +57,16 @@ public sealed class SettingsStore(AppPaths paths)
                 value=value with{Output=output,Profiles=value.Profiles.Select(p=>p with{Output=output}).ToList()};
                 LoadWarning="Legacy settings were backed up and migrated to profile schema 2. New export/ERPNext fields use explicit defaults; review them before use.";
             }
-            value.Validate();if(legacy)JsonFiles.Write(paths.Config,value);return value;
+            // 2.0 replaced the Bridge integration. Sites and per-profile ERPNext settings from schema 1 are dropped on purpose.
+            bool upgrade=value.SchemaVersion<AppSettings.CurrentSchema;
+            if(upgrade)
+            {
+                if(!legacy)File.Copy(paths.Config,paths.Config+".before-2.0-"+DateTime.UtcNow.ToString("yyyyMMddHHmmssfff"),false);
+                RemovedSiteIds=value.Sites.Select(s=>s.Id).ToList();
+                value=value with{SchemaVersion=AppSettings.CurrentSchema,Sites=[]};
+                LoadWarning="This version connects to ERPNext differently. ERPNext sites and credentials from the previous version were removed; add your site again in Settings. Your scanner profiles are unchanged.";
+            }
+            value.Validate();if(legacy||upgrade)JsonFiles.Write(paths.Config,value);return value;
         }
         catch(Exception ex) when(ex is JsonException or ArgumentException or IOException or NotSupportedException or NullReferenceException or FormatException or InvalidOperationException)
         {
