@@ -31,6 +31,8 @@ public sealed record ErpDestination
     public int DocStatus{get;init;}
     /// <summary>ERPNext's "modified" stamp when the document was last read.</summary>
     public string Modified{get;init;}="";
+    /// <summary>The posting date as day-month-year, or the raw value when ERPNext sent something else.</summary>
+    public string DisplayDate=>DateOnly.TryParseExact(Date,"yyyy-MM-dd",System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.None,out var day)?day.ToString("dd-MM-yyyy",System.Globalization.CultureInfo.InvariantCulture):Date;
     public string DocumentUrl=>$"{SiteOrigin}/app/{DocType.ToLowerInvariant().Replace(' ','-')}/{Uri.EscapeDataString(DocName)}";
     public bool SameTarget(ErpDestination? other)=>other!=null&&SiteId==other.SiteId&&SiteOrigins.Same(SiteOrigin,other.SiteOrigin)&&DocType==other.DocType&&DocName==other.DocName;
 }
@@ -40,7 +42,7 @@ public static class DocStatusRules
     /// <summary>Draft and submitted documents accept attachments from this application; cancelled ones never do.</summary>
     public static bool AllowsUpload(int docstatus)=>docstatus is 0 or 1;
     public static string Label(int docstatus)=>docstatus switch{0=>"Draft",1=>"Submitted",2=>"Cancelled",_=>"Unknown"};
-    public const string CancelledMessage="This document is cancelled in ERPNext, so nothing was sent. Your scanned pages are kept and can still be saved to a folder.";
+    public const string CancelledMessage="This document is cancelled in ERPNext, so files cannot be sent to it. Your scanned pages are kept and can still be saved to a folder.";
 }
 
 public enum SaveAction{Local,Erp,LocalAndErp}

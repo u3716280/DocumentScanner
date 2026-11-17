@@ -42,3 +42,9 @@ Repeat-scan tone regression (v1.0.3): reset app Brightness/Contrast to 0; keep d
 ## 1.1.1 startup timing / behavior
 
 Compare cold and warm launches with the same driver/device, first without profiles, then with Default Profile. Record log startup/recovery and per-backend/targeted probe timings, excluding user dialog delay when comparing driver speed. Test USB and network devices, powered-off/default devices, saved profiles without/stale defaults, explicitly loading another device/driver and Reset Profile. Confirm only first use and Reset invoke all-backend discovery; default/explicit profile load queries the exact target and one capability response per load. Confirm Source/DPI/Color stay correct, missing devices do not cause automatic substitution, Cancel cannot become late Ready, reset keeps profiles/pages/delivery journals, and F5 is equivalent to Reset Profile. Actual scan preflight still revalidates capabilities.
+
+## 2.0.0: ERPNext scan link and HP Smart Tank 615
+
+Run the manual checklist in `ERPNext-Scan-Link.md` (scan link, ERPNext v15, scanner). Record the Windows version,
+browser and version, HP driver version, whether the driver is 32- or 64-bit, and the result of each item.
+None of it has been performed yet.

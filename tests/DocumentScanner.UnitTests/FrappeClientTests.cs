@@ -32,7 +32,7 @@ public sealed class FrappeClientTests
     {
         var erp = new FakeErp { DocStatus = 1 }; using var client = erp.Client();
         var doc = await client.GetDocument("Sales Invoice", erp.DocName, "user@example.com", default);
-        Assert.Equal("Example Manufacturing Co.", doc.Party); Assert.Equal("2026-11-16", doc.Date); Assert.Equal("330.50", doc.Total); Assert.Equal("THB", doc.Currency);
+        Assert.Equal("Example Manufacturing Co.", doc.Party); Assert.Equal("2026-11-16", doc.Date); Assert.Equal("16-11-2026", doc.DisplayDate); Assert.Equal("soon", (doc with { Date = "soon" }).DisplayDate); Assert.Equal("330.50", doc.Total); Assert.Equal("THB", doc.Currency);
         Assert.Equal(1, doc.DocStatus); Assert.Equal("", doc.Reference); Assert.Equal(FakeErp.Origin, doc.SiteOrigin);
         Assert.Equal("https://erp.example.com/app/sales-invoice/ACC-INV-2611-0001", doc.DocumentUrl);
 

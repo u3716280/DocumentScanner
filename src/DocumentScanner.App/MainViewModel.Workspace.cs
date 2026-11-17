@@ -16,7 +16,7 @@ public sealed partial class MainViewModel
     public string DestinationType=>destination?.DocType??"";
     public string DestinationNumber=>destination?.DocName??"";
     public string DestinationParty=>destination?.Party??"";
-    public string DestinationDetails=>destination==null?"":string.Join("\n",new[]{destination.Date,DocStatusRules.Label(destination.DocStatus)+(destination.Status.Length>0&&!string.Equals(destination.Status,DocStatusRules.Label(destination.DocStatus),StringComparison.OrdinalIgnoreCase)?$" ({destination.Status})":""),(destination.Total+" "+destination.Currency).Trim(),destination.Reference}.Where(part=>part.Length>0));
+    public string DestinationDetails=>destination==null?"":string.Join("\n",new[]{destination.DisplayDate,DocStatusRules.Label(destination.DocStatus)+(destination.Status.Length>0&&!string.Equals(destination.Status,DocStatusRules.Label(destination.DocStatus),StringComparison.OrdinalIgnoreCase)?$" ({destination.Status})":""),(destination.Total+" "+destination.Currency).Trim(),destination.Reference}.Where(part=>part.Length>0));
     public string DestinationAccount=>destination==null?"":$"Sending as {destination.Account}\n{destination.SiteOrigin}";
     public string DestinationWarning=>destination!=null&&!CanUpload?DocStatusRules.CancelledMessage:"";
     public string DirectLaunchHint=>SaveActionRules.DirectLaunchMessage;

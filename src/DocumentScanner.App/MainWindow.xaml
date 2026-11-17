@@ -445,8 +445,12 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
-                            <TextBlock Text="Filename prefix" Style="{DynamicResource FieldLabel}"/>
-                            <TextBox Text="{Binding FilenamePrefix,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding NotBusy}" AutomationProperties.Name="Filename prefix"/>
+                            <!-- The prefix belongs to the profile's own naming. A scan started from ERPNext is named after the document instead. -->
+                            <StackPanel Visibility="{Binding NoDestination,Converter={StaticResource BoolVisibility}}">
+                                <TextBlock Text="Filename prefix" Style="{DynamicResource FieldLabel}"/>
+                                <TextBox Text="{Binding FilenamePrefix,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding NotBusy}" AutomationProperties.Name="Filename prefix"/>
+                            </StackPanel>
+                            <TextBlock Text="File name" Style="{DynamicResource FieldLabel}" Visibility="{Binding HasDestination,Converter={StaticResource BoolVisibility}}"/>
                             <TextBlock Text="{Binding FilenamePreview}" Style="{DynamicResource Caption}" Margin="0,6,0,0" ToolTip="{Binding FilenamePreview}"/>
 
                             <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,18,0,14"/>

@@ -25,7 +25,19 @@ public sealed partial class MainViewModel
     public ExportFormat[] OutputFormats=>Enum.GetValues<ExportFormat>();
     public ExportFormat OutputFormat{get=>settings.Output.Format;set{settings=settings with{Output=settings.Output with{Format=value}};Changed();Changed(nameof(FilenamePreview));}}
     public string FilenamePrefix{get=>settings.Output.Prefix;set{settings=settings with{Output=settings.Output with{Prefix=value}};Changed();Changed(nameof(FilenamePreview));}}
-    public string FilenamePreview{get{try{return OutputNaming.Resolve(settings.Output,DateTime.Now,1)+"."+OutputFormat.ToString().ToLowerInvariant();}catch(ArgumentException){return "Invalid filename prefix/pattern — review output settings";}}}
+    public string FilenamePreview
+    {
+        get
+        {
+            try
+            {
+                // Started from ERPNext: the name comes from the document, not from the profile's prefix and pattern.
+                if(destination!=null)return AttachmentNaming.FileName(AttachmentNaming.BaseName(destination.DocType,destination.DocName),OutputFormat,OutputFormat==ExportFormat.Pdf?null:1,0);
+                return OutputNaming.Resolve(settings.Output,DateTime.Now,1)+"."+OutputFormat.ToString().ToLowerInvariant();
+            }
+            catch(ArgumentException e){return destination!=null?e.Message:"Invalid filename prefix or pattern. Review the output settings.";}
+        }
+    }
     private const string JournalFile="delivery.json",LegacyJournalFile="upload-job.json",DestinationFile="destination.json";
     private string JournalPath=>JournalPathFor(session.Id);
     private string JournalPathFor(Guid id)=>Path.Combine(store.Folder(id),JournalFile);

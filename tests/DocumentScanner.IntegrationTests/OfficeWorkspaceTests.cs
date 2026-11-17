@@ -88,6 +88,7 @@ public sealed class OfficeWorkspaceTests
             Assert.True(vm.HasDestination);Assert.True(vm.CanUpload);Assert.True(vm.SendCommand.CanExecute(null));Assert.True(vm.SaveAndSendCommand.CanExecute(null));Assert.True(vm.SaveCommand.CanExecute(null));
             Assert.Equal(Wpf.Ui.Controls.ControlAppearance.Primary,vm.SendAppearance);Assert.Equal(Wpf.Ui.Controls.ControlAppearance.Secondary,vm.SaveAppearance);
             Assert.True(File.Exists(Path.Combine(folder,"destination.json")));Assert.DoesNotContain("secret",File.ReadAllText(Path.Combine(folder,"destination.json")),StringComparison.OrdinalIgnoreCase);
+            Assert.Equal("PI_ACC-PINV-2611-0042.pdf",vm.FilenamePreview);Assert.Contains("16-11-2026",vm.DestinationDetails);
             Layout(window,1440,900);Assert.Equal("ACC-PINV-2611-0042",((TextBlock)window.FindName("DestinationNumberText")).Text);Capture(window,"06-erpnext-destination-1440");
             Layout(window,1000,700);Capture(window,"07-erpnext-destination-150-percent",1.5);
             // A cancelled document keeps the pages and the folder save, and blocks both ERPNext actions with a stated reason.

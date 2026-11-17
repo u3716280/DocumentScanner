@@ -1,10 +1,12 @@
-# Document Scanner 1.2.1 — validation candidate
+# Document Scanner 2.0.0 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI (v1.2.1):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43713418612): 121 unit tests, 29 Windows integration tests, portable x86/x64 packages and WPF layout captures. Bridge source and independent Python CI live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner and live ERPNext acceptance remain pending.
+**New in 2.0:** scans start from ERPNext v15. A button on a Sales Invoice, Purchase Receipt or Purchase Invoice opens the application with that document as a fixed destination, and files are attached through the standard Frappe REST API. No custom app is installed on the server. Setup, use, limitations and the manual test checklist are in [`docs/ERPNext-Scan-Link.md`](docs/ERPNext-Scan-Link.md).
 
-**Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
+**Status:** see `docs/Validation-Report.md`. CI builds the application and runs unit tests and Windows integration tests, including a simulated ERPNext. A live ERPNext site, a browser opening the scan link, and a physical scanner have **not** been tested. Do not treat this as a hardware-certified production release.
+
+Sections below 2.0 describe earlier versions. Where they mention the Bridge app, searching for a document inside the application, ERPNext settings in profiles, a 20 MiB limit or a win-x86 package, 2.0 replaces that behaviour.
 
 ## Run a portable build
 

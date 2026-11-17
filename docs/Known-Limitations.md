@@ -1,3 +1,11 @@
+# 2.0.0 limitations
+
+- ERPNext: no exactly-once guarantee and a cancellation race remain under the standard API; the duplicate-name check is limited to attachments the user may see. Details and the reasons are in `ERPNext-Scan-Link.md`.
+- PDF pages are embedded without lossy compression, so long colour documents can exceed the site's upload limit.
+- Only x64 is supported. The build script still accepts `win-x86` because the CI workflow calls it; that package is not tested or supported.
+- The WPF UI based window (integrated title bar), the scan link in a real browser, a live ERPNext site and a physical scanner are untested. Automated tests render the window content without showing a window.
+- Sections below describe 1.x. Statements there about the Bridge app or a 20 MiB limit no longer apply.
+
 # Known limitations and release gates
 
 - Hardware compatibility, full application UI, native scanner dialogs and clean Windows deployment require manual testing. WPF ComboBox bindings and image/PDF codecs passed the 15-test Windows CI integration suite; USB and network scanner hardware remain untested.
