@@ -19,7 +19,7 @@ Not compatible with the 1.x ERPNext integration. See `docs/ERPNext-Scan-Link.md`
 - Opened directly, only Save to folder is available; the reason is shown.
 - New WPF UI based workspace (see the 1.2.x sample notes), with the destination shown in the Save and send panel.
 - Settings schema 2: ERPNext sites, their stored API keys and Bridge deliveries from 1.x are removed on first start. Scanner profiles are kept.
-- Only an x64 package is supported.
+- Both self-contained `win-x64` and `win-x86` portable packages are supported. The x64 package includes the NAPS2 Win32 worker for 32-bit TWAIN data sources; the x86 package supports 32-bit TWAIN directly.
 
 ## 1.2.1 — Safe ERPNext delivery and PDF boundaries
 

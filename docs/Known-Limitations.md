@@ -1,8 +1,9 @@
-# 2.0.0 limitations
+# 2.1.0 limitations
 
 - ERPNext: no exactly-once guarantee and a cancellation race remain under the standard API; the duplicate-name check is limited to attachments the user may see. Details and the reasons are in `ERPNext-Scan-Link.md`.
 - PDF pages are embedded without lossy compression, so long colour documents can exceed the site's upload limit.
-- Only x64 is supported. The build script still accepts `win-x86` because the CI workflow calls it; that package is not tested or supported.
+- Both win-x64 and win-x86 portable packages are produced and statically validated. The x64 application uses the bundled x86 NAPS2 worker for 32-bit TWAIN sources and can also enumerate 64-bit TWAIN sources; the x86 application supports 32-bit TWAIN sources only.
+- The x86 process has a smaller address space. Long colour documents and 600–1200 DPI pages require physical memory testing; build success is not evidence that every large job fits in x86 memory.
 - The WPF UI based window (integrated title bar), the scan link in a real browser, a live ERPNext site and a physical scanner are untested. Automated tests render the window content without showing a window.
 - Sections below describe 1.x. Statements there about the Bridge app or a 20 MiB limit no longer apply.
 

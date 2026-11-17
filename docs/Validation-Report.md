@@ -1,7 +1,10 @@
-# Document Scanner 2.0.0 — ERPNext scan link
+# Document Scanner 2.1.0 — ERPNext scan link and Sales Order
 
-Status: see the CI run for the commit that carries this file. Figures below are from the local Linux build and are
-confirmed or corrected by CI.
+Status: Windows CI passed for branch commit `cf4274601fdc796a3a6a6fe8254271ed772187c5`.
+
+- Run: https://github.com/u3716280/DocumentScanner/actions/runs/44031979442
+- 205/205 unit tests and 32/32 Windows integration tests passed.
+- Portable win-x64 and win-x86 packages were built and passed static PE architecture, self-contained runtime, PDFium and NAPS2 Win32 TWAIN-worker checks.
 
 Automated, passing:
 - Unit tests (Core and Infrastructure, run on Linux and on Windows CI): scan link parsing and refusal cases, site and DocType allow-lists, file naming and duplicate numbering, delivery record and outcome rules, settings upgrade, secret redaction, launch arguments.

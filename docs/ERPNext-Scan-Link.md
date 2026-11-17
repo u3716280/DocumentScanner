@@ -1,6 +1,6 @@
 # Scanning from ERPNext
 
-Document Scanner 2.0 is started from ERPNext. Open a Sales Order, Sales Invoice, Purchase Receipt or Purchase Invoice, click
+Document Scanner 2.1 is started from ERPNext. Open a Sales Order, Sales Invoice, Purchase Receipt or Purchase Invoice, click
 **Scan with DocumentScanner**, and the application opens with that document as its fixed destination.
 
 It uses the standard Frappe REST API only. Nothing is installed on the ERPNext server except four Client Scripts.
@@ -119,7 +119,7 @@ confirmation, before each file is sent and before a retry.
 - Scanner profiles (device, source, DPI, colour, output folder, prefix) are kept unchanged.
 - An unfinished Bridge delivery from 1.x cannot be retried and is discarded. Its scanned pages stay in the session.
 - The Bridge app on the ERPNext server is no longer used by this application.
-- Only a 64-bit (x64) package is provided. 32-bit TWAIN drivers still work through the bundled 32-bit worker.
+- Both win-x64 and win-x86 packages are provided. The x64 package uses the bundled 32-bit worker for 32-bit TWAIN drivers and can also enumerate 64-bit TWAIN sources; the x86 package supports 32-bit TWAIN sources.
 
 ## Known limitations
 
@@ -192,6 +192,7 @@ On Windows with the .NET SDK from `global.json`:
     dotnet test tests/DocumentScanner.UnitTests -c Release
     dotnet test tests/DocumentScanner.IntegrationTests -c Release
     ./build/Publish.ps1 -Runtime win-x64
+    ./build/Publish.ps1 -Runtime win-x86
 
 The package and its SHA-256 file are written to `artifacts/`. Third-party notices are collected into the package's
 `Licenses` folder; see `docs/Third-Party.md`.

@@ -2,11 +2,11 @@
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**New in 2.0:** scans start from ERPNext v15. A button on a Sales Order (2.1), Sales Invoice, Purchase Receipt or Purchase Invoice opens the application with that document as a fixed destination, and files are attached through the standard Frappe REST API. No custom app is installed on the server. Setup, use, limitations and the manual test checklist are in [`docs/ERPNext-Scan-Link.md`](docs/ERPNext-Scan-Link.md).
+**New in 2.1:** scans start from ERPNext v15. A button on a Sales Order (2.1), Sales Invoice, Purchase Receipt or Purchase Invoice opens the application with that document as a fixed destination, and files are attached through the standard Frappe REST API. No custom app is installed on the server. Setup, use, limitations and the manual test checklist are in [`docs/ERPNext-Scan-Link.md`](docs/ERPNext-Scan-Link.md).
 
 **Status:** see `docs/Validation-Report.md`. CI builds the application and runs unit tests and Windows integration tests, including a simulated ERPNext. A live ERPNext site, a browser opening the scan link, and a physical scanner have **not** been tested. Do not treat this as a hardware-certified production release.
 
-Sections below 2.0 describe earlier versions. Where they mention the Bridge app, searching for a document inside the application, ERPNext settings in profiles, a 20 MiB limit or a win-x86 package, 2.0 replaces that behaviour.
+Sections below 2.1 describe earlier versions. Where they mention the Bridge app, searching for a document inside the application, ERPNext settings in profiles or a fixed 20 MiB limit, 2.1 replaces that behaviour.
 
 ## Run a portable build
 
@@ -45,13 +45,13 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 ./build/Publish.ps1 -Runtime win-x86
 ```
 
-Output: `artifacts/DocumentScanner-v1.2.1-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
+Output: `artifacts/DocumentScanner-v2.1.0-win-x64.zip`, `artifacts/DocumentScanner-v2.1.0-win-x86.zip`, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`. Pushes and pull requests build and test without retaining a 240+ MiB portable package. Portable x64/x86 artifacts are produced only for a `v*` tag or a manual run with **publish_portable** enabled, and expire after 14 days. Promote validated packages to durable GitHub Releases with `.github/workflows/promote-release.yml`. Repository: https://github.com/u3716280/DocumentScanner. Hardware testing still requires a physical scanner.
 
 ## Data, privacy and recovery
 
-Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, OCR downloads or scan-sharing server is enabled. ERPNext uploads are optional, explicitly confirmed actions and require the separately installed bridge. See docs/ERPNext-Setup.md.
+Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, OCR downloads or scan-sharing server is enabled. ERPNext uploads are optional, explicitly confirmed actions through the standard Frappe REST API. No server-side custom app or Bridge is required; see `docs/ERPNext-Scan-Link.md`.
 
 Settings use JSON and are saved automatically. Invalid configuration is backed up before defaults are used. Session images are immutable; rotation and crop are metadata edits, so saving repeatedly does not repeatedly JPEG-encode the originals.
 

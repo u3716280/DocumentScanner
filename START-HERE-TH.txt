@@ -1,14 +1,14 @@
-Document Scanner 2.0.0 — เริ่มสแกนจาก ERPNext
+Document Scanner 2.1.0 — เริ่มสแกนจาก ERPNext
 
-รุ่นนี้เริ่มงานจาก ERPNext: เปิด Sales Order (รุ่น 2.1), Sales Invoice, Purchase Receipt หรือ Purchase Invoice แล้วกดปุ่ม
+รุ่นนี้เริ่มงานจาก ERPNext: เปิด Sales Order, Sales Invoice, Purchase Receipt หรือ Purchase Invoice แล้วกดปุ่ม
 "Scan with DocumentScanner" โปรแกรมจะเปิดขึ้นพร้อมเอกสารปลายทางที่ล็อกไว้ ไม่ต้องค้นหาเอกสารในโปรแกรมอีก
 
 ตั้งค่าครั้งแรก (ทำครั้งเดียวต่อเครื่อง ต่อผู้ใช้):
-1. แตก ZIP win-x64 แล้วเปิด DocumentScanner.exe ไม่ต้องใช้สิทธิ์ Administrator
+1. Windows 64-bit ใช้ ZIP win-x64; Windows 32-bit ใช้ ZIP win-x86 แล้วเปิด DocumentScanner.exe โดยไม่ต้องใช้สิทธิ์ Administrator
 2. Settings > Scan link > Register ERPNext scan link แล้วกด Test scan link
 3. Settings > ERPNext > New site ใส่ที่อยู่ https ของ ERPNext, API key และ API secret ของตัวเอง แล้วกด Test connection
    (สร้าง key ได้ที่ ERPNext > User > Settings > API Access > Generate Keys)
-4. ผู้ดูแล ERPNext ติดตั้ง Client Script 3 ตัวจากโฟลเดอร์ ERPNext-Client-Scripts ตามคู่มือ ERPNext-Scan-Link.txt
+4. ผู้ดูแล ERPNext ติดตั้ง Client Script 4 ตัวจากโฟลเดอร์ ERPNext-Client-Scripts ตามคู่มือ ERPNext-Scan-Link.txt
 
 การใช้งาน:
 - กดปุ่มใน ERPNext > ตรวจปลายทางที่แสดงทางขวา > สแกน > ติ๊กเลือกหน้า > เลือก PDF/JPG/PNG
@@ -20,9 +20,9 @@ Document Scanner 2.0.0 — เริ่มสแกนจาก ERPNext
 - เปิดโปรแกรมเองโดยไม่ผ่าน ERPNext ใช้ได้เฉพาะ Save to folder
 
 อัปเกรดจาก 1.x: ที่อยู่ ERPNext และ API key เดิมถูกลบ ต้องตั้งใหม่ใน Settings ส่วน Profile ของสแกนเนอร์ยังอยู่
-รุ่นนี้ไม่ใช้ Document Scanner Bridge และมีเฉพาะแพ็กเกจ win-x64
+รุ่นนี้ไม่ใช้ Document Scanner Bridge และมีแพ็กเกจ win-x64 กับ win-x86; รุ่น x64 ยังเรียก TWAIN 32-bit ผ่าน NAPS2 Win32 Worker ได้
 
-สถานะ: ผ่าน CI (unit test และ integration test บน Windows กับ ERPNext จำลอง)
+สถานะ: CI ล่าสุดผ่าน 205 unit tests และ 32 Windows integration tests กับ ERPNext จำลอง รวมทั้งสร้างแพ็กเกจ win-x64 และ win-x86 สำเร็จ
 ยังไม่ได้ทดสอบกับ ERPNext จริง, เบราว์เซอร์จริง และเครื่องสแกนจริง ดู checklist ใน ERPNext-Scan-Link.txt
 
 รายละเอียดและประวัติรุ่นก่อนหน้า:
