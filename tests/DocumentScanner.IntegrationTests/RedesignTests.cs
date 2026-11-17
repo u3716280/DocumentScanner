@@ -27,7 +27,7 @@ public sealed class RedesignTests
     [Fact]public Task CompleteProfileLoadUpdatesViewModelActualWpfControlsAndEngineOptions()=>ExportTests.OnSta(async()=>{
         string root=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N"));
         try{
-            var paths=new AppPaths(root);var settings=new SettingsStore(paths);var device=new DeviceInfo("test","Scanner","Wia","id");var profile=new ScanProfile("Duplex gray",device,new(){Source=ScanSource.Duplex,Dpi=600,Color=ScanColor.Grayscale,Paper="Letter",Brightness=120,Contrast=-50}){Output=new(){Prefix="POD",Format=ExportFormat.Png},Erp=new(){DocType="Delivery Note"}};settings.Save(new(){Profiles=[profile]});
+            var paths=new AppPaths(root);var settings=new SettingsStore(paths);var device=new DeviceInfo("test","Scanner","Wia","id");var profile=new ScanProfile("Duplex gray",device,new(){Source=ScanSource.Duplex,Dpi=600,Color=ScanColor.Grayscale,Paper="Letter",Brightness=120,Contrast=-50}){Output=new(){Prefix="POD",Format=ExportFormat.Png}};settings.Save(new(){Profiles=[profile]});
             using var vm=new MainViewModel(new Scanner(),new DocumentExporter(),settings,new SessionStore(paths),NullLogger<MainViewModel>.Instance);vm.Devices.Add(device);
             var window=new MainWindow(vm,paths);window.Measure(new Size(1440,960));window.Arrange(new Rect(0,0,1440,960));await Dispatcher.Yield(DispatcherPriority.ContextIdle);
             var end=DateTime.UtcNow.AddSeconds(10);while(vm.Busy&&DateTime.UtcNow<end)await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.False(vm.Busy);
@@ -35,14 +35,14 @@ public sealed class RedesignTests
             end=DateTime.UtcNow.AddSeconds(10);while(vm.Busy&&DateTime.UtcNow<end)await Dispatcher.Yield(DispatcherPriority.ContextIdle);Assert.False(vm.Busy);await Dispatcher.Yield(DispatcherPriority.ContextIdle);
             Assert.Equal(ScanSource.Duplex,vm.Source);Assert.Equal(600,vm.Dpi);Assert.Equal(ScanColor.Grayscale,vm.Color);Assert.Equal("POD",vm.FilenamePrefix);Assert.Equal(ExportFormat.Png,vm.OutputFormat);Assert.Contains(Descendants<TextBox>(window),box=>box.Text=="POD");
             var controls=Descendants<ComboBox>(window).ToArray();Assert.Contains(controls,c=>Equals(c.SelectedItem,600));Assert.Contains(controls,c=>Equals(c.SelectedItem,ScanSource.Duplex));Assert.Contains(controls,c=>Equals(c.SelectedItem,ScanColor.Grayscale));
-            var buttons=Descendants<Button>(window).ToArray();foreach(string text in new[]{"Save Local","Send to ERPNext","Save Local & Send to ERPNext"}){var b=Assert.Single(buttons,b=>Equals(b.Content,text));Assert.False(b.IsEnabled);}
+            var buttons=Descendants<Button>(window).ToArray();foreach(string text in new[]{"Save to folder","Send to ERPNext","Save and send"}){var b=Assert.Single(buttons,b=>Equals(b.Content,text));Assert.False(b.IsEnabled);}
             var options=ScanOptionsFactory.Create(device,profile.Settings);Assert.Equal(600,options.Dpi);Assert.Equal(0,options.Brightness);Assert.Equal(0,options.Contrast);
         }finally{Directory.Delete(root,true);}
     });
-    [Fact]public Task ProfileManagerHasAllFourGroupsAndDoesNotApplyOnOpen()=>ExportTests.OnSta(async()=>{
+    [Fact]public Task ProfileManagerHasScannerProcessingAndOutputGroupsAndDoesNotApplyOnOpen()=>ExportTests.OnSta(async()=>{
         var device=new DeviceInfo("test","Scanner","Wia","id");var profile=new ScanProfile("P",device,new());int saves=0;
         var window=new ProfileManagerWindow(new(){Profiles=[profile]},[device],profile,profile,_=>saves++);window.Measure(new Size(1000,820));window.Arrange(new Rect(0,0,1000,820));await Dispatcher.Yield(DispatcherPriority.ContextIdle);
-        var tabs=Descendants<TabItem>(window).Select(t=>t.Header?.ToString()).ToArray();foreach(string expected in new[]{"Scanner","Processing","Output","ERPNext"})Assert.Contains(expected,tabs);
+        var tabs=Descendants<TabItem>(window).Select(t=>t.Header?.ToString()).ToArray();foreach(string expected in new[]{"Scanner","Processing","Output"})Assert.Contains(expected,tabs);Assert.DoesNotContain("ERPNext",tabs);
         Assert.Equal(0,saves);Assert.Null(window.LoadRequested);
     });
 }

@@ -1,4 +1,4 @@
-param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='1.2.1')
+param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='2.1.0')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Push-Location $root
@@ -19,7 +19,8 @@ try {
     }
     foreach($name in @('Config','Licenses')){New-Item -ItemType Directory -Force -Path (Join-Path $folder $name)|Out-Null}
     Copy-Item README.md (Join-Path $folder 'README.txt')
-    Copy-Item docs/ERPNext-Setup.md (Join-Path $folder 'ERPNext-Setup.txt')
+    Copy-Item docs/ERPNext-Scan-Link.md (Join-Path $folder 'ERPNext-Scan-Link.txt')
+    Copy-Item erpnext/client-scripts (Join-Path $folder 'ERPNext-Client-Scripts') -Recurse
     Copy-Item START-HERE-TH.txt (Join-Path $folder 'START-HERE-TH.txt')
     Copy-Item docs/Validation-Report.md (Join-Path $folder 'Validation-Report.txt')
     Copy-Item docs/Hardware-Tests.md (Join-Path $folder 'Hardware-Tests.txt')

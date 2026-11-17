@@ -2,6 +2,11 @@
 <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
  <TextBlock Text="{l:Loc ExportTitle}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
  <Label Content="{l:Loc Folder}"/><DockPanel><Button DockPanel.Dock="Right" Content="{l:Loc Browse}" Click="BrowseClick"/><TextBox x:Name="FolderBox"/></DockPanel>
+ <StackPanel x:Name="DescriptionPanel" Visibility="Collapsed">
+  <Label Content="Description (optional)"/>
+  <ComboBox x:Name="DescriptionBox" IsEditable="True" Margin="0,3,0,4" AutomationProperties.Name="Attachment description"/>
+  <TextBlock Text="Pick a suggestion or type your own. The document number always comes from ERPNext." TextWrapping="Wrap" FontSize="12" Opacity="0.75" Margin="0,0,0,10"/>
+ </StackPanel>
  <Label Content="{l:Loc Filename}"/><TextBox x:Name="NameBox"/>
  <Label Content="{l:Loc Format}"/><ComboBox x:Name="FormatBox" SelectionChanged="FormatChanged"/>
  <Label Content="{l:Loc Quality}"/><TextBox x:Name="QualityBox" Text="90"/>
@@ -9,5 +14,5 @@
  <CheckBox x:Name="FitBox" Content="{l:Loc FitPage}" IsChecked="True"/>
  <CheckBox x:Name="SelectedBox" Content="{l:Loc SelectedOnly}"/>
  <TextBlock x:Name="ValidationMessage" TextWrapping="Wrap" Foreground="#B03030" Margin="0,12"/>
- <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="{l:Loc Cancel}" IsCancel="True"/><Button Content="{l:Loc Export}" Click="SaveClick" IsDefault="True" Background="#2367D1" Foreground="White"/></StackPanel>
+ <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="{l:Loc Cancel}" IsCancel="True"/><Button Content="{l:Loc Export}" Click="SaveClick" IsDefault="True" Background="{DynamicResource LampBrush}" Foreground="White"/></StackPanel>
 </StackPanel></ScrollViewer></Window>

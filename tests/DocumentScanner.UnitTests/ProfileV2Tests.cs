@@ -8,7 +8,7 @@ public sealed class ProfileV2Tests
     [Fact]public void CompleteProfileJsonRoundTripsWithoutCredentialOrDestinationState()
     {
         var p=new ScanProfile("Duplex invoices",new("device","Scanner","Twain","id",true),new(){Source=ScanSource.Duplex,Dpi=600,Color=ScanColor.Grayscale,Paper="Legal",Landscape=true,Brightness=123,Contrast=-456,AutoCrop=true,Deskew=false,DetectBlank=true,RemoveBlank=true,NativeUi=true})
-        {Output=new(){Format=ExportFormat.Jpg,JpegQuality=96,Folder=Path.GetTempPath(),Prefix="POD",Pattern="{prefix}-{date:yyyyMMdd}-{sequence:0000}"},Erp=new(){SiteId=Guid.NewGuid(),DocType="Delivery Note",Private=false}};
+        {Output=new(){Format=ExportFormat.Jpg,JpegQuality=96,Folder=Path.GetTempPath(),Prefix="POD",Pattern="{prefix}-{date:yyyyMMdd}-{sequence:0000}"}};
         var package=new ProfilePackage(2,[p]);package.Validate();string text=JsonSerializer.Serialize(package,JsonFiles.Options);var restored=JsonSerializer.Deserialize<ProfilePackage>(text,JsonFiles.Options)!;Assert.Equal(p,restored.Profiles[0]);
         Assert.DoesNotContain("Secret",text);Assert.DoesNotContain("Confirmed",text);Assert.DoesNotContain("DocumentNumber",text);
     }
@@ -22,8 +22,6 @@ public sealed class ProfileV2Tests
     {Assert.Throws<ArgumentException>(()=>ProfileValidation.Validate(new("P",new("d","Scanner","Wia","id"),new()){SchemaVersion=schema}));}
     [Fact]public void NamingAppliesPrefixOnceAndRejectsUnsupportedTokens()
     {var o=new OutputDefaults{Prefix="DN"};Assert.Equal("DN-20261114-0007",OutputNaming.Resolve(o,new(2026,11,14),7));Assert.Equal("20261114-0007",OutputNaming.Resolve(o with{Prefix=""},new(2026,11,14),7));Assert.Throws<ArgumentException>(()=>OutputNaming.Resolve(o with{Prefix="../bad"},DateTime.Today,1));Assert.Throws<ArgumentException>(()=>OutputNaming.Resolve(o with{Pattern="{secret}"},DateTime.Today,1));}
-    [Fact]public void DestinationConfirmationRequiresExactSessionAndRevisionAndCanBeCleared()
-    {var c=new DestinationConfirmation();var target=new ErpTarget(Guid.NewGuid(),Guid.NewGuid(),"u","Sales Order","SO-1",true,"rev1");c.Confirm(target);Assert.True(c.Matches(target));Assert.False(c.Matches(target with{SessionId=Guid.NewGuid()}));Assert.False(c.Matches(target with{DocType="Purchase Order"}));c.Invalidate();Assert.Null(c.Target);}
     [Fact]public void LegacySettingsMigrateWithBackupAndDetectionDoesNotBecomeRemoval()
     {
         string folder=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N"));try{var paths=new AppPaths(folder);Directory.CreateDirectory(Path.GetDirectoryName(paths.Config)!);File.WriteAllText(paths.Config,"{\"SchemaVersion\":1,\"OutputFolder\":"+JsonSerializer.Serialize(folder)+",\"Profiles\":[{\"Name\":\"Old\",\"Device\":{\"Key\":\"d\",\"Name\":\"Scanner\",\"Driver\":\"Wia\",\"Id\":\"id\"},\"Settings\":{\"Dpi\":600,\"Color\":\"Grayscale\",\"Source\":\"Feeder\",\"DetectBlank\":true}}]}");

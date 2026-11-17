@@ -24,19 +24,13 @@ public static class OutputNaming
         if(output.Prefix.Length==0)name=name.Trim('-');FilenameRules.Validate(name);return name;
     }
 }
-public sealed record ErpDefaults
-{
-    public Guid? SiteId{get;init;}
-    public string DocType{get;init;}="Sales Order";
-    public bool Private{get;init;}=true;
-}
 public static class ProfileValidation
 {
     public static void Validate(ScanProfile p)
     {
         if(p.SchemaVersion!=2)throw new ArgumentException("Unsupported profile schema. This app supports version 2.");
-        if(p.Id==Guid.Empty||string.IsNullOrWhiteSpace(p.Name)||p.Name.Length>80||p.Device==null||p.Settings==null||p.Output==null||p.Erp==null)throw new ArgumentException("Invalid profile.");
-        p.Settings.Validate();p.Output.Validate();ArgumentException.ThrowIfNullOrWhiteSpace(p.Device.Id);ArgumentException.ThrowIfNullOrWhiteSpace(p.Erp.DocType);
+        if(p.Id==Guid.Empty||string.IsNullOrWhiteSpace(p.Name)||p.Name.Length>80||p.Device==null||p.Settings==null||p.Output==null)throw new ArgumentException("Invalid profile.");
+        p.Settings.Validate();p.Output.Validate();ArgumentException.ThrowIfNullOrWhiteSpace(p.Device.Id);
     }
     public static IReadOnlyList<string> CapabilityIssues(ScanSettings s,ScannerCapabilities? caps)
     {

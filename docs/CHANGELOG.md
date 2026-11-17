@@ -1,3 +1,26 @@
+## 2.1.0 — Sales Order
+
+- Sales Order is accepted as a scan destination. Files are named `SO_{DOCUMENT-NO}`; the date shown is the order date, and the customer's purchase order number is offered as a description.
+- Client Script added: `erpnext/client-scripts/sales_order.js`.
+- A 2.0.0 copy refuses Sales Order links; update the application before using the button on a Sales Order.
+
+## 2.0.0 — Scans start from ERPNext
+
+Not compatible with the 1.x ERPNext integration. See `docs/ERPNext-Scan-Link.md`.
+
+- A **Scan with DocumentScanner** button on Sales Invoice, Purchase Receipt and Purchase Invoice opens the application through a `documentscanner://` link with that document as a fixed destination. Client Scripts are in `erpnext/client-scripts/`.
+- Uses the standard Frappe REST API only: read the document, list its attachments, read the site's upload limit, and `upload_file` as a private multipart upload. The Bridge app, the in-app document search and the per-profile ERPNext settings are removed.
+- Scan links are accepted only for the three DocTypes and only from sites listed in Settings. Each user's API key is kept in Windows Credential Manager.
+- Settings: sites and API keys with Test connection; register, test and remove the scan link for the current Windows user; attachment descriptions.
+- A second copy of the application passes its link to the running one instead of opening another window.
+- Files are named after the ERPNext document (`SI_`, `PR_`, `PI_`), with an optional description. Names already used in the folder or on the document get `_001`, `_002`; nothing is overwritten.
+- The upload limit is read from the site instead of a fixed 20 MiB. Files over the limit are refused before upload.
+- Before every file the document is read again: a cancelled document stops the send, and content that is already attached is recorded as delivered instead of being sent twice.
+- Opened directly, only Save to folder is available; the reason is shown.
+- New WPF UI based workspace (see the 1.2.x sample notes), with the destination shown in the Save and send panel.
+- Settings schema 2: ERPNext sites, their stored API keys and Bridge deliveries from 1.x are removed on first start. Scanner profiles are kept.
+- Both self-contained `win-x64` and `win-x86` portable packages are supported. The x64 package includes the NAPS2 Win32 worker for 32-bit TWAIN data sources; the x86 package supports 32-bit TWAIN directly.
+
 ## 1.2.1 — Safe ERPNext delivery and PDF boundaries
 
 - Add explicit retry/reconcile, keep and abandon choices for unfinished ERPNext deliveries; changed destinations start a new operation instead of reusing an idempotency key.

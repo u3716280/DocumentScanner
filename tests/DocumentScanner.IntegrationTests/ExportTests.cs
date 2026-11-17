@@ -54,12 +54,12 @@ public sealed class ExportTests
             Assert.Equal(original,File.ReadAllBytes(Path.Combine(folder,"white.png")));
         }finally{Directory.Delete(folder,true);}
     });
-    [Fact]public Task BaselineMultipagePdfIsValidAndWithinBridgeLimit()=>OnSta(async()=>{
+    [Fact]public Task BaselineMultipagePdfIsValidAndBelowTheDefaultErpNextLimit()=>OnSta(async()=>{
         var folder=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
         try{
             var pages=new[]{CreatePage(folder,1200,1800,Colors.White,"one.png"),CreatePage(folder,1200,1800,Colors.LightGray,"two.png"),CreatePage(folder,1800,1200,Colors.LightBlue,"three.png")};
             var result=await new DocumentExporter().ExportAsync(pages,folder,new(folder,"baseline",ExportFormat.Pdf,Paper:OutputPaper.A4),null,default);
-            Assert.Null(result.Error);string path=Assert.Single(result.Saved);AttachmentPolicy.Validate(path);using var pdf=UglyToad.PdfPig.PdfDocument.Open(path);Assert.Equal(3,pdf.NumberOfPages);foreach(var page in pdf.GetPages()){Assert.InRange(Math.Min(page.Width,page.Height),594.0,596.0);Assert.InRange(Math.Max(page.Width,page.Height),841.0,843.0);}
+            Assert.Null(result.Error);string path=Assert.Single(result.Saved);Assert.True(new FileInfo(path).Length<25L*1024*1024);using var pdf=UglyToad.PdfPig.PdfDocument.Open(path);Assert.Equal(3,pdf.NumberOfPages);foreach(var page in pdf.GetPages()){Assert.InRange(Math.Min(page.Width,page.Height),594.0,596.0);Assert.InRange(Math.Max(page.Width,page.Height),841.0,843.0);}
         }finally{Directory.Delete(folder,true);}
     });
     [Fact]public Task CancellationDoesNotFinalizePdf()=>OnSta(async()=>{

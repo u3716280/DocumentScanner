@@ -1,10 +1,12 @@
-# Document Scanner 1.2.1 — validation candidate
+# Document Scanner 2.1.0 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
-**Windows CI (v1.2.1):** [Build passed](https://github.com/u3716280/DocumentScanner/actions/runs/43713418612): 121 unit tests, 29 Windows integration tests, portable x86/x64 packages and WPF layout captures. Bridge source and independent Python CI live in [document_scanner_bridge](https://github.com/u3716280/document_scanner_bridge). Physical scanner and live ERPNext acceptance remain pending.
+**New in 2.1:** scans start from ERPNext v15. A button on a Sales Order (2.1), Sales Invoice, Purchase Receipt or Purchase Invoice opens the application with that document as a fixed destination, and files are attached through the standard Frappe REST API. No custom app is installed on the server. Setup, use, limitations and the manual test checklist are in [`docs/ERPNext-Scan-Link.md`](docs/ERPNext-Scan-Link.md).
 
-**Release status:** See `docs/Validation-Report.md`. A successful build is not evidence of hardware compatibility. Do not treat this source package as a hardware-certified production release.
+**Status:** see `docs/Validation-Report.md`. CI builds the application and runs unit tests and Windows integration tests, including a simulated ERPNext. A live ERPNext site, a browser opening the scan link, and a physical scanner have **not** been tested. Do not treat this as a hardware-certified production release.
+
+Sections below 2.1 describe earlier versions. Where they mention the Bridge app, searching for a document inside the application, ERPNext settings in profiles or a fixed 20 MiB limit, 2.1 replaces that behaviour.
 
 ## Run a portable build
 
@@ -43,13 +45,13 @@ dotnet test tests/DocumentScanner.IntegrationTests -c Release
 ./build/Publish.ps1 -Runtime win-x86
 ```
 
-Output: `artifacts/DocumentScanner-v1.2.1-win-x64.zip`, x86 equivalent, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
+Output: `artifacts/DocumentScanner-v2.1.0-win-x64.zip`, `artifacts/DocumentScanner-v2.1.0-win-x86.zip`, and SHA-256 checksums. Build machine needs internet for NuGet and license source retrieval. Normal application use does not need internet.
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`. Pushes and pull requests build and test without retaining a 240+ MiB portable package. Portable x64/x86 artifacts are produced only for a `v*` tag or a manual run with **publish_portable** enabled, and expire after 14 days. Promote validated packages to durable GitHub Releases with `.github/workflows/promote-release.yml`. Repository: https://github.com/u3716280/DocumentScanner. Hardware testing still requires a physical scanner.
 
 ## Data, privacy and recovery
 
-Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, OCR downloads or scan-sharing server is enabled. ERPNext uploads are optional, explicitly confirmed actions and require the separately installed bridge. See docs/ERPNext-Setup.md.
+Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, OCR downloads or scan-sharing server is enabled. ERPNext uploads are optional, explicitly confirmed actions through the standard Frappe REST API. No server-side custom app or Bridge is required; see `docs/ERPNext-Scan-Link.md`.
 
 Settings use JSON and are saved automatically. Invalid configuration is backed up before defaults are used. Session images are immutable; rotation and crop are metadata edits, so saving repeatedly does not repeatedly JPEG-encode the originals.
 
@@ -102,7 +104,7 @@ The native WPF workspace now follows the reviewed layout: toolbar Profile select
 
 Manage profiles supports Create, Save, Save As, Rename, Delete, Default and JSON Import/Export across Scanner / Processing / Output / ERPNext groups. Profiles use schema 2 with stable IDs. Legacy configuration is backed up before migration; newer unsupported schemas block writes. Loading validates the exact device/driver and capabilities before applying settings; unavailable/unsupported values are not silently replaced. Unknown capabilities require explicit native-dialog handling. Profile loading never confirms an ERPNext destination.
 
-Save Local exports selected pages only. Send to ERPNext needs no permanent local output folder. The combined action completes local copies before upload, retains successes and journals per-file outcomes for retry. In-app search shows real document details and requires separate Confirm destination and Send now actions. A new/recovered session starts unconfirmed. API credentials are held in Windows Credential Manager, outside profile JSON.
+Save to folder exports selected pages only. Send to ERPNext needs no permanent local output folder. The combined action completes local copies before upload, retains successes and journals per-file outcomes for retry. In-app search shows real document details and requires separate Confirm destination and Send now actions. A new/recovered session starts unconfirmed. API credentials are held in Windows Credential Manager, outside profile JSON.
 
 **ERPNext prerequisite:** install the companion `document_scanner_bridge` on an authorized staging site first. Source, installation instructions and independent CI are in the private [document_scanner_bridge repository](https://github.com/u3716280/document_scanner_bridge). The Windows workflow no longer bundles a copy of the bridge. Existing bridge installations keep the same app name and API endpoints; see the bridge installation guide for migration from the earlier source ZIP. See [setup and limitations](docs/ERPNext-Setup.md). The build does not deploy this app, configure credentials or establish live-site/hardware compatibility. The bridge contract tests use isolated fakes, not a running Frappe/Redis/database stack.
 
@@ -124,6 +126,6 @@ Logs now record startup policy, total/recovery duration, each full-search backen
 
 The main window follows the approved Scan → Review → Save / Send layout with an Office light palette. Choose a profile and scan using the single Scan/Scan more action. Select pages with their checkboxes (Ctrl/Shift selection is also supported). Scan settings apply to future scans; the Edit page tab changes only selected pages. Tone values are shown exactly; Apply tone is explicit. Original/Adjusted changes the preview mode and never overwrites acquired PNGs.
 
-The output strip always states the selected page count. Save Local writes to disk; Send to ERPNext opens destination verification; the combined action saves locally first. No destination is automatically confirmed. Bridge installation guidance is available in the workspace, profile and site screens. Test connection is explicit and is not run during initialization. Physical-scanner startup/performance and actual ERPNext deployment still require validation on the user's environment.
+The output strip always states the selected page count. Save to folder writes to disk; Send to ERPNext opens destination verification; the combined action saves locally first. No destination is automatically confirmed. Bridge installation guidance is available in the workspace, profile and site screens. Test connection is explicit and is not run during initialization. Physical-scanner startup/performance and actual ERPNext deployment still require validation on the user's environment.
 
 Windows CI publishes real WPF layout captures in the separate `DocumentScanner-ui-preview` artifact, using fictional sample documents. These captures verify the implemented layout; the earlier mockup is a design reference, not a screenshot of the executable.

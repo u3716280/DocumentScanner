@@ -1,3 +1,26 @@
+# Document Scanner 2.1.0 — ERPNext scan link and Sales Order
+
+Status: Windows CI passed for branch commit `cf4274601fdc796a3a6a6fe8254271ed772187c5`.
+
+- Run: https://github.com/u3716280/DocumentScanner/actions/runs/44031979442
+- 205/205 unit tests and 32/32 Windows integration tests passed.
+- Portable win-x64 and win-x86 packages were built and passed static PE architecture, self-contained runtime, PDFium and NAPS2 Win32 TWAIN-worker checks.
+
+Automated, passing:
+- Unit tests (Core and Infrastructure, run on Linux and on Windows CI): scan link parsing and refusal cases, site and DocType allow-lists, file naming and duplicate numbering, delivery record and outcome rules, settings upgrade, secret redaction, launch arguments.
+- Simulated ERPNext (an in-memory stand-in for the five REST calls): authentication, permission, missing and cancelled documents, upload success, partial failure, timeout before and after the server stored the file, duplicate content, server-side rename, size limit, redirect, certificate failure, retry of only the unconfirmed files.
+- The multipart upload request was parsed with Werkzeug 3.1.9 (the version in the target bench): Thai file name and file bytes arrive intact.
+- Windows integration tests: window content renders with and without a destination, button states for direct start, scan-link start and a cancelled document, second-copy link forwarding over the named pipe, registration command format.
+
+Not tested:
+- A live ERPNext site. No request was sent to any real site and no file was attached to any real document.
+- A browser opening `documentscanner://`, the Windows registration itself, and the Settings window.
+- A shown window: the integrated title bar, dialogs, and the confirmation and result windows.
+- Any physical scanner, including the HP Smart Tank 615.
+- The published x64 package on a clean Windows machine.
+
+Use the manual checklist in `ERPNext-Scan-Link.md`.
+
 # Document Scanner 1.2.1 — delivery/PDF validation
 
 Status: Windows CI passed for application commit `b13729b49a51997c386674449f2f25ffb613f6ce`.

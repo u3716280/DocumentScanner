@@ -10,6 +10,9 @@ public static class WindowsCredentialStore
     [DllImport("advapi32.dll",EntryPoint="CredWriteW",CharSet=CharSet.Unicode,SetLastError=true)]private static extern bool Write(ref Credential credential,uint flags);
     [DllImport("advapi32.dll",EntryPoint="CredReadW",CharSet=CharSet.Unicode,SetLastError=true)]private static extern bool Read(string target,uint type,uint flags,out nint credential);
     [DllImport("advapi32.dll")]private static extern void CredFree(nint credential);
+    [DllImport("advapi32.dll",EntryPoint="CredDeleteW",CharSet=CharSet.Unicode,SetLastError=true)]private static extern bool Remove(string target,uint type,uint flags);
+    /// <summary>Removes the stored credentials for a site. Missing entries are not an error.</summary>
+    public static void Delete(Guid site)=>Remove("DocumentScanner/ERPNext/"+site,1,0);
     public static void Save(Guid site,ErpCredential value)
     {
         byte[] bytes=Encoding.Unicode.GetBytes(JsonSerializer.Serialize(value));nint blob=Marshal.AllocHGlobal(bytes.Length);
