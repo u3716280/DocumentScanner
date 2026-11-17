@@ -41,6 +41,16 @@ public sealed class FrappeClientTests
         Assert.Equal("SUP-9", bare.Party); Assert.Equal("IV6811-0123", bare.Reference); Assert.Equal("", bare.Date); Assert.Equal("", bare.Total); Assert.Equal("", bare.Status);
     }
 
+    [Fact] public async Task SalesOrderUsesItsOwnDateAndCustomerOrderNumber()
+    {
+        var erp = new FakeErp { DocType = "Sales Order", DocName = "SAL-ORD-2611-0007", DocStatus = 1 }; using var client = erp.Client();
+        erp.Fields = new() { ["customer"] = "CUST-1", ["customer_name"] = "Example Manufacturing Co.", ["transaction_date"] = "2026-11-17", ["posting_date"] = "1999-01-01", ["po_no"] = "PO-4500012", ["grand_total"] = 1250, ["currency"] = "THB", ["status"] = "To Deliver and Bill" };
+        var doc = await client.GetDocument("Sales Order", erp.DocName, "u", default);
+        Assert.Equal("2026-11-17", doc.Date); Assert.Equal("17-11-2026", doc.DisplayDate); Assert.Equal("PO-4500012", doc.Reference); Assert.Equal("1,250.00", doc.Total);
+        Assert.Equal("https://erp.example.com/app/sales-order/SAL-ORD-2611-0007", doc.DocumentUrl);
+        Assert.Equal("SO_SAL-ORD-2611-0007.pdf", AttachmentNaming.FileName(AttachmentNaming.BaseName(doc.DocType, doc.DocName), ExportFormat.Pdf, null, 0));
+    }
+
     [Fact] public async Task DocumentNamesAreEscapedIntoThePathAndNeverLeaveTheOrigin()
     {
         var erp = new FakeErp { DocType = "Purchase Receipt", DocName = "PR/2569 #7?x=1&y=../../File" }; using var client = erp.Client();

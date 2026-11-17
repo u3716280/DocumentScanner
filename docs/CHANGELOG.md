@@ -1,3 +1,9 @@
+## 2.1.0 — Sales Order
+
+- Sales Order is accepted as a scan destination. Files are named `SO_{DOCUMENT-NO}`; the date shown is the order date, and the customer's purchase order number is offered as a description.
+- Client Script added: `erpnext/client-scripts/sales_order.js`.
+- A 2.0.0 copy refuses Sales Order links; update the application before using the button on a Sales Order.
+
 ## 2.0.0 — Scans start from ERPNext
 
 Not compatible with the 1.x ERPNext integration. See `docs/ERPNext-Scan-Link.md`.

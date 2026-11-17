@@ -1,9 +1,9 @@
 # Scanning from ERPNext
 
-Document Scanner 2.0 is started from ERPNext. Open a Sales Invoice, Purchase Receipt or Purchase Invoice, click
+Document Scanner 2.0 is started from ERPNext. Open a Sales Order, Sales Invoice, Purchase Receipt or Purchase Invoice, click
 **Scan with DocumentScanner**, and the application opens with that document as its fixed destination.
 
-It uses the standard Frappe REST API only. Nothing is installed on the ERPNext server except three Client Scripts.
+It uses the standard Frappe REST API only. Nothing is installed on the ERPNext server except four Client Scripts.
 The Bridge app used by 1.x is no longer used.
 
 Status: built and tested by CI with unit tests and a simulated ERPNext. **Not yet tested against a live ERPNext
@@ -11,7 +11,7 @@ site, a browser, or a physical scanner.** Use the checklist at the end before re
 
 ## 1. Install the Client Scripts (ERPNext administrator, once per site)
 
-The scripts are in `erpnext/client-scripts/`: `sales_invoice.js`, `purchase_receipt.js`, `purchase_invoice.js`.
+The scripts are in `erpnext/client-scripts/`: `sales_order.js`, `sales_invoice.js`, `purchase_receipt.js`, `purchase_invoice.js`.
 
 For each file:
 
@@ -90,9 +90,9 @@ saving to a folder work without a network.
 | Image | `{TYPE}_{DOCUMENT-NO}_P{page}.{ext}` | `SI_ACC-INV-2611-0001_P001.jpg` |
 | With description | `{TYPE}_{DOCUMENT-NO}_{description}` | `PI_ACC-PINV-2611-0042_ใบกำกับภาษี.pdf` |
 
-`SI` = Sales Invoice, `PR` = Purchase Receipt, `PI` = Purchase Invoice. The document number always comes from
+`SO` = Sales Order, `SI` = Sales Invoice, `PR` = Purchase Receipt, `PI` = Purchase Invoice. The document number always comes from
 ERPNext and cannot be typed. The optional description is picked from a list: the supplier's own number on the
-document (supplier invoice number, supplier delivery note) and the suggestions under **Settings > File names**. You
+document (customer purchase order, supplier invoice number, supplier delivery note) and the suggestions under **Settings > File names**. You
 can also type one. Characters Windows does not allow are replaced with `-`.
 
 Nothing is overwritten. If the name is already used in the folder or on the ERPNext document, a number is added
@@ -143,7 +143,7 @@ confirmation, before each file is sent and before a retry.
 ## Security notes
 
 - The link is treated as untrusted input: only the `scan` action, exactly three parameters, strict decoding, an
-  allow-list of three DocTypes and an allow-list of sites. Request paths are built by the application; a link
+  allow-list of four DocTypes and an allow-list of sites. Request paths are built by the application; a link
   cannot name an endpoint.
 - Redirects from the ERPNext site are refused and TLS certificate checks are never relaxed.
 - A second copy of the application passes its link to the running one through a named pipe that only the same
@@ -167,7 +167,7 @@ Scan link
 - [ ] Link from a site not in Settings, and for another DocType, is refused with a clear message
 
 ERPNext v15 (use a draft document you choose)
-- [ ] Sales Invoice, Purchase Receipt and Purchase Invoice each show the correct details
+- [ ] Sales Order, Sales Invoice, Purchase Receipt and Purchase Invoice each show the correct details
 - [ ] Send to ERPNext: file appears on the document as a private attachment with the expected name
 - [ ] Save and send: folder file and attachment have the same name
 - [ ] Sending the same scan twice does not attach it twice

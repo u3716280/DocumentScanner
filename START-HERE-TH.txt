@@ -1,6 +1,6 @@
 Document Scanner 2.0.0 — เริ่มสแกนจาก ERPNext
 
-รุ่นนี้เริ่มงานจาก ERPNext: เปิด Sales Invoice, Purchase Receipt หรือ Purchase Invoice แล้วกดปุ่ม
+รุ่นนี้เริ่มงานจาก ERPNext: เปิด Sales Order (รุ่น 2.1), Sales Invoice, Purchase Receipt หรือ Purchase Invoice แล้วกดปุ่ม
 "Scan with DocumentScanner" โปรแกรมจะเปิดขึ้นพร้อมเอกสารปลายทางที่ล็อกไว้ ไม่ต้องค้นหาเอกสารในโปรแกรมอีก
 
 ตั้งค่าครั้งแรก (ทำครั้งเดียวต่อเครื่อง ต่อผู้ใช้):

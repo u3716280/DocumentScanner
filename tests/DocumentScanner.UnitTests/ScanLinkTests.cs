@@ -12,6 +12,7 @@ public sealed class ScanLinkTests
     }
 
     [Theory]
+    [InlineData("Sales Order", "SAL-ORD-2026-00001")]
     [InlineData("Sales Invoice", "ACC-SINV-2026-00001")]
     [InlineData("Purchase Receipt", "MAT-PRE-2611-0001")]
     [InlineData("Purchase Invoice", "ใบซื้อ/2569 #7 & 50%+1")]
@@ -37,7 +38,7 @@ public sealed class ScanLinkTests
     }
 
     [Theory]
-    [InlineData("Sales Order")]
+    [InlineData("Delivery Note")]
     [InlineData("File")]
     [InlineData("User")]
     [InlineData("Sales Invoice ")]
@@ -95,5 +96,5 @@ public sealed class ScanLinkTests
     }
 
     [Fact] public void DocTypeCodesMatchTheNamingStandard() =>
-        Assert.Equal(new[] { "Sales Invoice=SI", "Purchase Receipt=PR", "Purchase Invoice=PI" }, ErpDocTypes.All.Select(d => $"{d.DocType}={d.Code}"));
+        Assert.Equal(new[] { "Sales Order=SO", "Sales Invoice=SI", "Purchase Receipt=PR", "Purchase Invoice=PI" }, ErpDocTypes.All.Select(d => $"{d.DocType}={d.Code}"));
 }

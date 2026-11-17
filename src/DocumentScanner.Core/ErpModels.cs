@@ -51,7 +51,7 @@ public enum UploadState{Pending,Unknown,Succeeded,Failed}
 /// <summary>Which of the three save buttons are available, and which one leads.</summary>
 public static class SaveActionRules
 {
-    public const string DirectLaunchMessage="Sending to ERPNext starts from the Scan button on a Sales Invoice, Purchase Receipt or Purchase Invoice.";
+    public const string DirectLaunchMessage="Sending to ERPNext starts from the Scan button on a Sales Order, Sales Invoice, Purchase Receipt or Purchase Invoice.";
     public static bool Enabled(SaveAction action,bool hasDestination,bool hasSelection,bool busy)=>
         !busy&&hasSelection&&(action==SaveAction.Local||hasDestination);
     public static SaveAction Primary(bool hasDestination)=>hasDestination?SaveAction.Erp:SaveAction.Local;

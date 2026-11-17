@@ -4,6 +4,7 @@ namespace DocumentScanner.UnitTests;
 public sealed class AttachmentNamingTests
 {
     [Theory]
+    [InlineData("Sales Order", "SAL-ORD-2611-0001", "SO_SAL-ORD-2611-0001.pdf")]
     [InlineData("Sales Invoice", "ACC-INV-2611-0001", "SI_ACC-INV-2611-0001.pdf")]
     [InlineData("Purchase Receipt", "MAT-PRE-2611-0001", "PR_MAT-PRE-2611-0001.pdf")]
     [InlineData("Purchase Invoice", "ACC-PINV-2611-0001", "PI_ACC-PINV-2611-0001.pdf")]
@@ -51,7 +52,7 @@ public sealed class AttachmentNamingTests
         Assert.Throws<ArgumentException>(() => AttachmentNaming.BaseName("Sales Invoice", new string('9', 130)));
         Assert.Throws<ArgumentException>(() => AttachmentNaming.BaseName("Sales Invoice", " . "));
         Assert.Equal("SI_---", AttachmentNaming.BaseName("Sales Invoice", "///"));
-        Assert.Throws<ScanLinkException>(() => AttachmentNaming.BaseName("Sales Order", "SO-1"));
+        Assert.Throws<ScanLinkException>(() => AttachmentNaming.BaseName("Delivery Note", "DN-1"));
         string longest = AttachmentNaming.BaseName("Sales Invoice", new string('9', 100), new string('x', 40));
         Assert.True(AttachmentNaming.FileName(longest, ExportFormat.Jpg, 999, 999).Length <= AttachmentNaming.MaxFileName);
     }

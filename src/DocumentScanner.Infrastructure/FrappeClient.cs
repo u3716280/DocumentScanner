@@ -95,7 +95,7 @@ public sealed class FrappeClient : IDisposable
         return new()
         {
             SiteId = Site.Id, SiteOrigin = Origin, Account = account, DocType = info.DocType, DocName = docname, Party = party,
-            Date = Text(data, "posting_date"), Reference = info.ReferenceField == null ? "" : Text(data, info.ReferenceField),
+            Date = Text(data, info.DateField), Reference = info.ReferenceField == null ? "" : Text(data, info.ReferenceField),
             Total = info.HasTotal ? Amount(data, "grand_total") : "", Currency = info.HasTotal ? Text(data, "currency") : "",
             Status = Text(data, "status"), DocStatus = docstatus, Modified = Text(data, "modified"),
         };

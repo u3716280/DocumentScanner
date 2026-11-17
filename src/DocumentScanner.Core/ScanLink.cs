@@ -3,13 +3,14 @@ namespace DocumentScanner.Core;
 
 /// <summary>One ERPNext DocType the scan link may target, with the fields shown for it.</summary>
 public sealed record ErpDocTypeInfo(string DocType, string Code, string PartyField, string PartyNameField, string PartyLabel,
-    string? ReferenceField, string? ReferenceLabel, bool HasTotal);
+    string? ReferenceField, string? ReferenceLabel, bool HasTotal, string DateField = "posting_date");
 
 /// <summary>The only DocTypes this version accepts. A link naming anything else is refused.</summary>
 public static class ErpDocTypes
 {
     public static readonly IReadOnlyList<ErpDocTypeInfo> All =
     [
+        new("Sales Order", "SO", "customer", "customer_name", "Customer", "po_no", "Customer purchase order", true, "transaction_date"),
         new("Sales Invoice", "SI", "customer", "customer_name", "Customer", null, null, true),
         new("Purchase Receipt", "PR", "supplier", "supplier_name", "Supplier", "supplier_delivery_note", "Supplier delivery note", false),
         new("Purchase Invoice", "PI", "supplier", "supplier_name", "Supplier", "bill_no", "Supplier invoice number", true),
