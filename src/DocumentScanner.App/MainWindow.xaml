@@ -66,7 +66,7 @@
 
         <ui:TitleBar Title="Document Scanner">
             <ui:TitleBar.Icon>
-                <ui:SymbolIcon Symbol="Scan24"/>
+                <ui:ImageIcon Source="/DocumentScanner;component/Resources/scanner.ico" Width="16" Height="16"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.TrailingContent>
                 <ui:Button Content="Settings" Icon="{ui:SymbolIcon Settings24}" Appearance="Transparent" BorderThickness="0" Click="SettingsClick" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Application settings and data folder"/>
