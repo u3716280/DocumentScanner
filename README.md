@@ -4,7 +4,7 @@ Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWA
 
 **New in 2.1:** scans start from ERPNext v15. A button on a Sales Order (2.1), Sales Invoice, Purchase Receipt or Purchase Invoice opens the application with that document as a fixed destination, and files are attached through the standard Frappe REST API. No custom app is installed on the server. Setup, use, limitations and the manual test checklist are in [`docs/ERPNext-Scan-Link.md`](docs/ERPNext-Scan-Link.md).
 
-**Status:** see `docs/Validation-Report.md`. CI builds the application and runs unit tests and Windows integration tests, including a simulated ERPNext. A live ERPNext site, a browser opening the scan link, and a physical scanner have **not** been tested. Do not treat this as a hardware-certified production release.
+**Status:** release-ready. Windows CI passed 205 unit tests and 32 integration tests. On 18 November 2026 the project owner reported successful manual acceptance with a live ERPNext v15 site, Chrome and Edge scan links, the HP Smart Tank 615, and both win-x64/win-x86 portable packages. See `docs/Validation-Report.md` for the tested scope and remaining limitations.
 
 Sections below 2.1 describe earlier versions. Where they mention the Bridge app, searching for a document inside the application, ERPNext settings in profiles or a fixed 20 MiB limit, 2.1 replaces that behaviour.
 

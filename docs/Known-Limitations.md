@@ -4,12 +4,12 @@
 - PDF pages are embedded without lossy compression, so long colour documents can exceed the site's upload limit.
 - Both win-x64 and win-x86 portable packages are produced and statically validated. The x64 application uses the bundled x86 NAPS2 worker for 32-bit TWAIN sources and can also enumerate 64-bit TWAIN sources; the x86 application supports 32-bit TWAIN sources only.
 - The x86 process has a smaller address space. Long colour documents and 600–1200 DPI pages require physical memory testing; build success is not evidence that every large job fits in x86 memory.
-- The WPF UI based window (integrated title bar), the scan link in a real browser, a live ERPNext site and a physical scanner are untested. Automated tests render the window content without showing a window.
+- User-reported manual acceptance passed on 18 November 2026 for the WPF UI, Chrome/Edge scan links, a live ERPNext v15 site, HP Smart Tank 615 and both portable architectures. This does not certify other scanner drivers, browser policies, Windows builds or ERPNext customizations.
 - Sections below describe 1.x. Statements there about the Bridge app or a 20 MiB limit no longer apply.
 
 # Known limitations and release gates
 
-- Hardware compatibility, full application UI, native scanner dialogs and clean Windows deployment require manual testing. WPF ComboBox bindings and image/PDF codecs passed the 15-test Windows CI integration suite; USB and network scanner hardware remain untested.
+- The tested HP Smart Tank 615 installation passed manual acceptance. Other hardware, native scanner dialogs, network discovery and clean Windows environments still require their own acceptance. WPF bindings and image/PDF codecs also pass Windows CI.
 - Capabilities may be incomplete or incorrect. Duplex/ADF availability follows reported capabilities. Unknown capabilities require native UI; the app does not claim automatic duplex support.
 - Auto paper uses maximum reported scan area, with A4 fallback. Content cropping is reversible and adapts to background brightness; it can also detect a light document on a dark platen. It is a heuristic, not a guarantee for every paper/background.
 - Brightness/contrast for new scans are per-page app adjustments, rendered once from the acquired original. Non-native WIA/TWAIN scans request neutral hardware values each time. A native scanner dialog can still apply its own adjustments; physical auto-exposure behavior requires device testing.

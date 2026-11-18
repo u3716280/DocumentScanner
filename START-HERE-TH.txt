@@ -23,7 +23,7 @@ Document Scanner 2.1.0 — เริ่มสแกนจาก ERPNext
 รุ่นนี้ไม่ใช้ Document Scanner Bridge และมีแพ็กเกจ win-x64 กับ win-x86; รุ่น x64 ยังเรียก TWAIN 32-bit ผ่าน NAPS2 Win32 Worker ได้
 
 สถานะ: CI ล่าสุดผ่าน 205 unit tests และ 32 Windows integration tests กับ ERPNext จำลอง รวมทั้งสร้างแพ็กเกจ win-x64 และ win-x86 สำเร็จ
-ยังไม่ได้ทดสอบกับ ERPNext จริง, เบราว์เซอร์จริง และเครื่องสแกนจริง ดู checklist ใน ERPNext-Scan-Link.txt
+ทดสอบการใช้งานจริงผ่านแล้วเมื่อ 18 พฤศจิกายน 2026: ERPNext v15, Chrome/Edge, HP Smart Tank 615 และแพ็กเกจ x64/x86 ดูขอบเขตการทดสอบใน docs/Validation-Report.md
 
 รายละเอียดและประวัติรุ่นก่อนหน้า:
 

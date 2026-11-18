@@ -1,25 +1,31 @@
 # Document Scanner 2.1.0 — ERPNext scan link and Sales Order
 
-Status: Windows CI passed for branch commit `cf4274601fdc796a3a6a6fe8254271ed772187c5`.
+Status: **Automated and user-reported manual acceptance passed; production release approved.**
 
-- Run: https://github.com/u3716280/DocumentScanner/actions/runs/44031979442
+## Automated evidence
+
+- Main CI: https://github.com/u3716280/DocumentScanner/actions/runs/44100408057
 - 205/205 unit tests and 32/32 Windows integration tests passed.
-- Portable win-x64 and win-x86 packages were built and passed static PE architecture, self-contained runtime, PDFium and NAPS2 Win32 TWAIN-worker checks.
+- Portable build: https://github.com/u3716280/DocumentScanner/actions/runs/44101188935
+- Both win-x64 and win-x86 packages passed static PE architecture, self-contained .NET/WPF runtime, PDFium and bundled NAPS2 Win32 TWAIN-worker checks.
+- Unit and simulated-ERPNext coverage includes scan-link parsing/refusal, four-DocType/site allow-lists, duplicate numbering, delivery outcomes, cancelled documents, upload/retry, secret redaction, Thai multipart filenames, named-pipe second-instance forwarding and registration command format.
 
-Automated, passing:
-- Unit tests (Core and Infrastructure, run on Linux and on Windows CI): scan link parsing and refusal cases, site and DocType allow-lists, file naming and duplicate numbering, delivery record and outcome rules, settings upgrade, secret redaction, launch arguments.
-- Simulated ERPNext (an in-memory stand-in for the five REST calls): authentication, permission, missing and cancelled documents, upload success, partial failure, timeout before and after the server stored the file, duplicate content, server-side rename, size limit, redirect, certificate failure, retry of only the unconfirmed files.
-- The multipart upload request was parsed with Werkzeug 3.1.9 (the version in the target bench): Thai file name and file bytes arrive intact.
-- Windows integration tests: window content renders with and without a destination, button states for direct start, scan-link start and a cancelled document, second-copy link forwarding over the named pipe, registration command format.
+## Manual acceptance reported by the project owner
 
-Not tested:
-- A live ERPNext site. No request was sent to any real site and no file was attached to any real document.
-- A browser opening `documentscanner://`, the Windows registration itself, and the Settings window.
-- A shown window: the integrated title bar, dialogs, and the confirmation and result windows.
-- Any physical scanner, including the HP Smart Tank 615.
-- The published x64 package on a clean Windows machine.
+Date: 18 November 2026.
 
-Use the manual checklist in `ERPNext-Scan-Link.md`.
+Result: **Passed** for the planned 2.1.0 acceptance scope.
+
+- HP Smart Tank 615 acquisition through the installed Windows scanner drivers, including the required TWAIN path.
+- Flatbed/feeder scanning and PDF, JPG and PNG output behavior.
+- Chrome and Edge opening the registered `documentscanner://` link.
+- Registration/test/removal and per-user Windows Credential Manager configuration.
+- Live ERPNext v15 flow for Sales Order, Sales Invoice, Purchase Receipt and Purchase Invoice.
+- Send to ERPNext, Save to folder and Save and send.
+- Private attachments, cancellation refusal, duplicate-content handling, collision suffixes and retry/recovery behavior.
+- Both win-x64 and win-x86 portable packages.
+
+This is user-reported acceptance on the tested installation, not an independent certification of every Windows build, scanner driver, browser policy or ERPNext customization. Stress cases such as 100-page colour jobs, 600–1200 DPI x86 memory use, scanner jams and every third-party File hook remain environment-specific. See `Known-Limitations.md`.
 
 # Document Scanner 1.2.1 — delivery/PDF validation
 

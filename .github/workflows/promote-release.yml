@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$TARGET_SHA" --title "DocumentScanner $RELEASE_TAG" --notes "Validated Windows portable packages from Actions run $SOURCE_RUN_ID. Includes win-x64, win-x86 and SHA-256 checksums. Physical scanner and live ERPNext acceptance remain required."
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$TARGET_SHA" --title "DocumentScanner $RELEASE_TAG" --notes "DocumentScanner 2.1.0 production release. Validated Windows portable packages from Actions run $SOURCE_RUN_ID, including win-x64, win-x86 and SHA-256 checksums. Automated tests and project-owner manual acceptance with ERPNext v15, Chrome/Edge and HP Smart Tank 615 passed on 18 November 2026."
           fi
           find release-assets -type f \( -name '*.zip' -o -name '*.sha256' \) -print0 | xargs -0 gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber
 

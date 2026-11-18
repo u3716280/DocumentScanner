@@ -1,4 +1,4 @@
-# Hardware acceptance checklist — NOT YET EXECUTED
+# Hardware acceptance checklist
 
 Record for each run: date, tester, Windows edition/build, OS/process architecture, device model/firmware, connection (USB/Ethernet/Wi-Fi), driver name/version, settings and result.
 
@@ -29,7 +29,7 @@ Record for each run: date, tester, Windows edition/build, OS/process architectur
 
 When testing HP Smart Tank 615 or another multifunction printer, record capabilities from its actual installed scanner driver. Never infer ADF/duplex from the printer's printing capabilities.
 
-No real scanner, Windows desktop, jam, duplex, or clean-machine test has been performed in the Linux authoring environment.
+Automated authoring/CI did not operate physical hardware. Separately, the project owner reported the planned 2.1.0 Windows acceptance passed on 18 November 2026 with an HP Smart Tank 615 and both x64/x86 packages. Untested stress and fault-injection rows in this broader matrix remain future environment-specific checks unless explicitly recorded.
 
 Repeat-scan tone regression (v1.0.3): reset app Brightness/Contrast to 0; keep device/source/DPI/color settings fixed; disable the native driver dialog for a controlled test; scan the same test chart with Auto Crop off/on/on/off. Record preview and saved PNG colors, selected-page B/C values, driver type/model and whether hardware auto-exposure is active. Repeat with a nonzero app level and confirm the level is not accumulated across preview, crop toggles or export. Synthetic CI checks verify retained-pixel equality from the same input; physical acquisition may vary and is not covered by those checks.
 
@@ -47,4 +47,4 @@ Compare cold and warm launches with the same driver/device, first without profil
 
 Run the manual checklist in `ERPNext-Scan-Link.md` (scan link, ERPNext v15, scanner). Record the Windows version,
 browser and version, HP driver version, whether the driver is 32- or 64-bit, and the result of each item.
-None of it has been performed yet.
+Project-owner acceptance was reported as passed on 18 November 2026. See `Validation-Report.md` and the completed checklist in `ERPNext-Scan-Link.md`.

@@ -1,5 +1,6 @@
 ## 2.1.0 — Sales Order
 
+- Release acceptance completed on 18 November 2026: automated Windows tests and portable-package validation passed, followed by project-owner manual acceptance with ERPNext v15, Chrome/Edge, HP Smart Tank 615, and win-x64/win-x86 packages.
 - Sales Order is accepted as a scan destination. Files are named `SO_{DOCUMENT-NO}`; the date shown is the order date, and the customer's purchase order number is offered as a description.
 - Client Script added: `erpnext/client-scripts/sales_order.js`.
 - A 2.0.0 copy refuses Sales Order links; update the application before using the button on a Sales Order.

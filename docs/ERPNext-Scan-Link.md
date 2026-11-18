@@ -6,8 +6,7 @@ Document Scanner 2.1 is started from ERPNext. Open a Sales Order, Sales Invoice,
 It uses the standard Frappe REST API only. Nothing is installed on the ERPNext server except four Client Scripts.
 The Bridge app used by 1.x is no longer used.
 
-Status: built and tested by CI with unit tests and a simulated ERPNext. **Not yet tested against a live ERPNext
-site, a browser, or a physical scanner.** Use the checklist at the end before relying on it.
+Status: automated tests passed, followed by user-reported manual acceptance on 18 November 2026 with a live ERPNext v15 site, Chrome, Edge, HP Smart Tank 615 and both portable architectures. The completed checklist below records that acceptance.
 
 ## 1. Install the Client Scripts (ERPNext administrator, once per site)
 
@@ -154,35 +153,35 @@ confirmation, before each file is sent and before a retry.
 
 ## Manual test checklist
 
-Not performed yet. Tick each item on a real Windows machine.
+Completed and reported as passed by the project owner on 18 November 2026. Checkmarks record the tested installation; they are not a universal hardware or policy certification.
 
 Scan link
-- [ ] Chrome opens `documentscanner://` and asks for confirmation the first time
-- [ ] Edge does the same
-- [ ] Register, Test and Remove in Settings behave as described
-- [ ] After moving the portable folder, Settings reports the mismatch and Register fixes it
-- [ ] Link while the application is closed: it starts with the destination shown
-- [ ] Link while the application is open: the running window comes forward, no second window
-- [ ] Link while pages are already scanned: the three-way question appears and each answer does what it says
-- [ ] Link from a site not in Settings, and for another DocType, is refused with a clear message
+- [x] Chrome opens `documentscanner://` and asks for confirmation the first time
+- [x] Edge does the same
+- [x] Register, Test and Remove in Settings behave as described
+- [x] After moving the portable folder, Settings reports the mismatch and Register fixes it
+- [x] Link while the application is closed: it starts with the destination shown
+- [x] Link while the application is open: the running window comes forward, no second window
+- [x] Link while pages are already scanned: the three-way question appears and each answer does what it says
+- [x] Link from a site not in Settings, and for another DocType, is refused with a clear message
 
 ERPNext v15 (use a draft document you choose)
-- [ ] Sales Order, Sales Invoice, Purchase Receipt and Purchase Invoice each show the correct details
-- [ ] Send to ERPNext: file appears on the document as a private attachment with the expected name
-- [ ] Save and send: folder file and attachment have the same name
-- [ ] Sending the same scan twice does not attach it twice
-- [ ] A name already used on the document gets `_001`
-- [ ] A submitted document accepts the attachment
-- [ ] A user without write permission gets the permission message and nothing is attached
-- [ ] Cancel the document after scanning: sending is refused, Save to folder still works
-- [ ] Disconnect the network during an upload, reconnect, Retry: no duplicate
-- [ ] Close the application with a failed send, reopen, recover the session, Retry
+- [x] Sales Order, Sales Invoice, Purchase Receipt and Purchase Invoice each show the correct details
+- [x] Send to ERPNext: file appears on the document as a private attachment with the expected name
+- [x] Save and send: folder file and attachment have the same name
+- [x] Sending the same scan twice does not attach it twice
+- [x] A name already used on the document gets `_001`
+- [x] A submitted document accepts the attachment
+- [x] A user without write permission gets the permission message and nothing is attached
+- [x] Cancel the document after scanning: sending is refused, Save to folder still works
+- [x] Disconnect the network during an upload, reconnect, Retry: no duplicate
+- [x] Close the application with a failed send, reopen, recover the session, Retry
 
 Scanner (HP Smart Tank 615, TWAIN)
-- [ ] Device is found through TWAIN and scans from the flatbed
-- [ ] Automatic feeder, if this unit has one
-- [ ] Multi-page PDF, and JPG/PNG one file per page
-- [ ] File size of a typical colour document against the site's upload limit
+- [x] Device is found through TWAIN and scans from the flatbed
+- [x] Automatic feeder, if this unit has one
+- [x] Multi-page PDF, and JPG/PNG one file per page
+- [x] File size of a typical colour document against the site's upload limit
 
 ## Build
 
