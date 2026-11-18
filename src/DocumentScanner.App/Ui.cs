@@ -4,7 +4,14 @@ using System.Windows.Media;
 namespace DocumentScanner.App;
 internal static class Ui
 {
-    public static Button Button(string text,Action action,bool primary=false){var b=new Button{Content=text,MinHeight=36,Margin=new(4)};if(primary){b.SetResourceReference(Control.BackgroundProperty,"LampBrush");b.Foreground=Brushes.White;}b.Click+=(_,_)=>{try{action();}catch(Exception ex){MessageBox.Show(ex.Message,"Document Scanner",MessageBoxButton.OK,MessageBoxImage.Warning);}};return b;}
+    public static Button Button(string text,Action action,bool primary=false)
+    {
+        // A primary button is a WPF UI accent button: hover and pressed keep the teal background and white text.
+        // A plain Button coloured by hand loses its background to the library's hover style while the text stays white.
+        Button b=primary?new Wpf.Ui.Controls.Button{Appearance=Wpf.Ui.Controls.ControlAppearance.Primary}:new Button();
+        b.Content=text;b.MinHeight=36;b.Margin=new(4);b.Click+=(_,_)=>{try{action();}catch(Exception ex){MessageBox.Show(ex.Message,"Document Scanner",MessageBoxButton.OK,MessageBoxImage.Warning);}};
+        return b;
+    }
     public static TextBlock Heading(string text)=>new(){Text=text,FontSize=16,FontWeight=FontWeights.SemiBold,Margin=new(0,16,0,4)};
     public static TextBlock Line(string text,bool strong=false)=>new(){Text=text,TextWrapping=TextWrapping.Wrap,FontWeight=strong?FontWeights.SemiBold:FontWeights.Normal,Margin=new(0,2,0,2)};
     public static TextBlock Warning(string text)=>new(){Text=text,TextWrapping=TextWrapping.Wrap,Margin=new(0,2,0,10),Foreground=new SolidColorBrush(Color.FromRgb(180,35,24))};

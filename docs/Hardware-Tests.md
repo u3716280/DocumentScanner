@@ -52,3 +52,7 @@ Project-owner acceptance was reported as passed on 18 November 2026. See `Valida
 ## 2.2.0: tray icon and start-up speed (pending interactive Windows run)
 
 Record the `Startup timing` log line for a cold launch (first after sign-in) with 2.1.0 and with 2.2.0 on the same PC. Then check: the scanner icon in the tray is sharp at 100/125/150 %; close (X) hides to the tray with a one-time notice, pages and the selected scanner unchanged; clicking the icon reopens instantly; a Scan link from ERPNext while hidden brings the window to the front with the destination set; double-clicking DocumentScanner.exe while hidden brings it back; tray Exit with pages asks keep/discard and Cancel keeps it running; tray Exit while a dialog is open only brings the dialog forward; signing out with pages offers recovery at the next start.
+
+## 2.3.0: scan progress and accent buttons (pending interactive Windows run)
+
+With the HP Smart Tank 615 on flatbed and on the feeder, with WIA and with TWAIN: the progress card appears at Scan, shows "Starting the scanner…", then the page number and a percentage that rises during each page (or a moving bar when the driver reports none); the taskbar button shows the same progress; each finished page appears in the list; Cancel and scanner errors clear the card. Hover and press every teal button in Settings, Save document, Profile manager and the send/retry dialogs: the text stays white and readable.

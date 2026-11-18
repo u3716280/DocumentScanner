@@ -1,3 +1,10 @@
+## 2.3.0 — Scan progress and button fix
+
+Not yet tested on Windows hardware; checked by CI only.
+
+- While a page scans, a progress card on the scanner glass shows "Scanning page 2 · 45 %" with a progress bar, and the taskbar button shows the same progress. Before the first page it shows "Starting the scanner…". The percentage comes from the driver: when a driver reports none (some WIA and network/eSCL scanners), the bar moves without a number. Each finished page still appears in the page list as soon as it arrives. NAPS2 does not provide partial images, so the image itself appears only when the page is complete.
+- Fixed: the text on teal buttons in Settings, Save document, Save profile, and the send/retry dialogs disappeared on hover. They now use the same accent button as Scan, which keeps the teal background and white text on hover and when pressed.
+
 ## 2.2.0 — Tray icon and faster start
 
 Not yet tested on Windows hardware; checked by CI only.

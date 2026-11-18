@@ -108,6 +108,11 @@ public interface IScannerService : IDisposable
     Task<DeviceInfo> ConnectEndpointAsync(string endpoint, CancellationToken ct);
     Task ScanAsync(DeviceInfo device, ScanSettings settings, string sessionFolder, Func<PageData,Task> acquired,
         nint windowHandle, CancellationToken ct);
+    /// <summary>As <see cref="ScanAsync(DeviceInfo,ScanSettings,string,Func{PageData,Task},nint,CancellationToken)"/>, also reporting
+    /// when each page starts and how far it has got. Services that cannot report progress scan without it.</summary>
+    Task ScanAsync(DeviceInfo device, ScanSettings settings, string sessionFolder, Func<PageData,Task> acquired,
+        nint windowHandle, IProgress<ScanProgress>? progress, CancellationToken ct) =>
+        ScanAsync(device, settings, sessionFolder, acquired, windowHandle, ct);
 }
 public interface IDocumentExporter
 {

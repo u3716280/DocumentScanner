@@ -10,6 +10,8 @@
     <SolidColorBrush x:Key="PlatenTextBrush" Color="#E6EAEE"/>
     <SolidColorBrush x:Key="PlatenMutedBrush" Color="#A9B3BD"/>
     <SolidColorBrush x:Key="LampGlowBrush" Color="#7FE3F2"/>
+    <SolidColorBrush x:Key="PlatenCardBrush" Color="#F0181C21"/>
+    <SolidColorBrush x:Key="PlatenLineBrush" Color="#3A434D"/>
 
     <!-- Surfaces and text. -->
     <SolidColorBrush x:Key="PaperBrush" Color="#FFFFFF"/>
