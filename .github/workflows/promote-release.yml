@@ -15,6 +15,11 @@ on:
         description: Exact validated source commit for the tag
         required: true
         type: string
+      acceptance_note:
+        description: Optional sentence on manual acceptance, for example who tested what and when
+        required: false
+        type: string
+        default: ""
       cleanup_actions_artifacts:
         description: Delete all Actions artifacts after the release assets are safe
         required: true
@@ -38,8 +43,14 @@ jobs:
 
       - name: Verify release files
         shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
+          # The packages must be the build of this version: Publish.ps1 names them DocumentScanner-v<version>-<runtime>.zip.
+          for runtime in win-x64 win-x86; do
+            test -n "$(find release-assets -type f -name "DocumentScanner-${RELEASE_TAG}-${runtime}.zip")" || { echo "No DocumentScanner-${RELEASE_TAG}-${runtime}.zip in the artifact"; exit 1; }
+          done
           test "$(find release-assets -type f -name '*.zip' | wc -l)" -ge 2
           test "$(find release-assets -type f -name '*.sha256' | wc -l)" -ge 2
           find release-assets -type f -name '*.sha256' -print0 | while IFS= read -r -d '' checksum; do
@@ -53,10 +64,13 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
           TARGET_SHA: ${{ inputs.target_sha }}
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          ACCEPTANCE_NOTE: ${{ inputs.acceptance_note }}
         run: |
           set -euo pipefail
+          notes="DocumentScanner ${RELEASE_TAG#v} production release. Validated Windows portable packages from Actions run $SOURCE_RUN_ID, including win-x64, win-x86 and SHA-256 checksums. See docs/CHANGELOG.md for changes."
+          if [ -n "$ACCEPTANCE_NOTE" ]; then notes="$notes $ACCEPTANCE_NOTE"; fi
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$TARGET_SHA" --title "DocumentScanner $RELEASE_TAG" --notes "DocumentScanner 2.1.0 production release. Validated Windows portable packages from Actions run $SOURCE_RUN_ID, including win-x64, win-x86 and SHA-256 checksums. Automated tests and project-owner manual acceptance with ERPNext v15, Chrome/Edge and HP Smart Tank 615 passed on 18 November 2026."
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$TARGET_SHA" --title "DocumentScanner $RELEASE_TAG" --notes "$notes"
           fi
           find release-assets -type f \( -name '*.zip' -o -name '*.sha256' \) -print0 | xargs -0 gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber
 
