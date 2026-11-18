@@ -5,4 +5,7 @@
 <data name="CropHint" xml:space="preserve"><value>Drag a rectangle to keep. Draw again to replace it. Escape cancels.</value></data>
 <data name="ApplyCrop" xml:space="preserve"><value>Apply Crop</value></data>
 <data name="CropCancel" xml:space="preserve"><value>Cancel</value></data>
+<data name="TrayOpen" xml:space="preserve"><value>Open Document Scanner</value></data>
+<data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+<data name="TrayHint" xml:space="preserve"><value>Document Scanner is still running here. Click the icon to open it, or right-click and choose Exit to quit.</value></data>
 </root>

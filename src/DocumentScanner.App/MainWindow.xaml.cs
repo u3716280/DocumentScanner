@@ -21,7 +21,37 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Loaded+=async(_,_)=>await vm.InitializeAsync();
     }
     private async void PagesChanged(object sender,SelectionChangedEventArgs e)=>await vm.SetSelectionAsync(PageList.SelectedItems.Cast<PageViewModel>().ToArray());
-    private void OnClosing(object? sender,CancelEventArgs e)=>e.Cancel=!vm.CanClose();
+    /// <summary>Set by App once the tray icon exists. Windows created directly (tests) keep the plain close behaviour.</summary>
+    public bool CloseToTray{get;set;}
+    private bool exitRequested;
+    /// <summary>Raised when closing hid the window instead of quitting.</summary>
+    public event EventHandler? HiddenToTray;
+    private void OnClosing(object? sender,CancelEventArgs e)
+    {
+        if(CloseToTray&&!exitRequested)
+        {
+            // The session, the scanner and any running scan stay as they are; only the window goes away.
+            e.Cancel=true;Hide();HiddenToTray?.Invoke(this,EventArgs.Empty);return;
+        }
+        e.Cancel=!vm.CanClose();
+    }
+    /// <summary>Brings the window back from the tray, from the taskbar or from behind other windows.</summary>
+    public void ShowFromTray()
+    {
+        Show();
+        if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;
+        Activate();
+    }
+    /// <summary>Exit from the tray menu: the usual close checks (busy, keep or discard pages) decide whether the app quits.</summary>
+    public void RequestExit()
+    {
+        ShowFromTray();
+        // A dialog (Settings, Save, Crop…) is still open: bring it forward and let the user finish it first.
+        if(OwnedWindows.Count>0){OwnedWindows[0].Activate();return;}
+        exitRequested=true;
+        try{Close();}
+        finally{exitRequested=false;}
+    }
     private void SelectAllClick(object sender,RoutedEventArgs e)=>PageList.SelectAll();
     private void SelectBlanksClick(object sender,RoutedEventArgs e){PageList.SelectedItems.Clear();foreach(var page in vm.Pages.Where(p=>p.Data.BlankCandidate))PageList.SelectedItems.Add(page);}
     private void DragStart(object sender,MouseButtonEventArgs e)=>dragPoint=e.GetPosition(PageList);

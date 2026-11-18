@@ -395,6 +395,12 @@ public sealed partial class MainViewModel : Bindable,IDisposable
             return true;
         }catch(Exception ex){log.LogError(ex,"Close persistence failed");MessageBox.Show("Unable to save the session. Check disk space before closing.",Text.Get("Error"));return false;}
     }
+    /// <summary>Windows is signing out or shutting down: keep settings and any pages for recovery, without asking.</summary>
+    public void SaveForShutdown()
+    {
+        try{PersistSettings();if(session.Pages.Count>0)store.Save(session);log.LogInformation("Session kept at Windows sign-out pages={Pages}",session.Pages.Count);}
+        catch(Exception ex){log.LogError(ex,"Session save at Windows sign-out failed");}
+    }
     public void Dispose(){cancellation?.Dispose();}
 }
 

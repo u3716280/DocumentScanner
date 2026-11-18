@@ -48,3 +48,7 @@ Compare cold and warm launches with the same driver/device, first without profil
 Run the manual checklist in `ERPNext-Scan-Link.md` (scan link, ERPNext v15, scanner). Record the Windows version,
 browser and version, HP driver version, whether the driver is 32- or 64-bit, and the result of each item.
 Project-owner acceptance was reported as passed on 18 November 2026. See `Validation-Report.md` and the completed checklist in `ERPNext-Scan-Link.md`.
+
+## 2.2.0: tray icon and start-up speed (pending interactive Windows run)
+
+Record the `Startup timing` log line for a cold launch (first after sign-in) with 2.1.0 and with 2.2.0 on the same PC. Then check: the scanner icon in the tray is sharp at 100/125/150 %; close (X) hides to the tray with a one-time notice, pages and the selected scanner unchanged; clicking the icon reopens instantly; a Scan link from ERPNext while hidden brings the window to the front with the destination set; double-clicking DocumentScanner.exe while hidden brings it back; tray Exit with pages asks keep/discard and Cancel keeps it running; tray Exit while a dialog is open only brings the dialog forward; signing out with pages offers recovery at the next start.

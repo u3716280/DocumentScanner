@@ -1,3 +1,16 @@
+## 2.2.0 — Tray icon and faster start
+
+Not yet tested on Windows hardware; checked by CI only.
+
+- Closing the window hides Document Scanner to the notification area (a scanner icon) instead of quitting. Pages, the selected scanner and a running scan stay as they are, so opening it again, or clicking **Scan** in ERPNext, is instant. Click the icon to open it; right-click → **Exit** quits with the usual keep/discard prompt. A notice the first time explains where it went. Minimize still goes to the taskbar.
+- New application icon (a flatbed scanner) for the tray, taskbar, title bar and `.exe`, drawn by `build/make_icon.py`.
+- A second copy (every Scan link) hands its link to the running copy before WPF loads, and lets it come to the front.
+- Portable packages are published with ReadyToRun (precompiled), so the first launch after sign-in opens faster. The packages are larger.
+- A splash screen shows straight away while the application loads.
+- Signing out of Windows keeps any scanned pages for recovery without asking.
+- The log records start-up timing from process start (`Startup timing ms_since_process_start Main=… AppStartup=… WindowCreated=… FirstRender=…`).
+- No auto-start: the first launch after sign-in is still a cold start.
+
 ## 2.1.0 — Sales Order
 
 - Release acceptance completed on 18 November 2026: automated Windows tests and portable-package validation passed, followed by project-owner manual acceptance with ERPNext v15, Chrome/Edge, HP Smart Tank 615, and win-x64/win-x86 packages.

@@ -1,11 +1,11 @@
-param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='2.1.0')
+param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='2.2.0')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Push-Location $root
 try {
     $folder=Join-Path $root "publish/$Runtime/DocumentScanner"
     if(Test-Path $folder){Remove-Item $folder -Recurse -Force}
-    dotnet publish src/DocumentScanner.App/DocumentScanner.App.csproj -c Release -r $Runtime --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:PublishAot=false -p:Version=$Version -o $folder
+    dotnet publish src/DocumentScanner.App/DocumentScanner.App.csproj -c Release -r $Runtime --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:PublishAot=false -p:PublishReadyToRun=true -p:Version=$Version -o $folder
     if($LASTEXITCODE -ne 0){throw 'Publish failed'}
     if(!(Test-Path (Join-Path $folder 'DocumentScanner.exe'))){throw 'Application executable is missing'}
     if(!(Get-ChildItem $folder -Recurse -Filter 'NAPS2.Worker.exe')){throw 'TWAIN Win32 worker is missing'}
