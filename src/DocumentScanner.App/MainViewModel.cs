@@ -54,6 +54,13 @@ public sealed partial class MainViewModel : Bindable,IDisposable
     public bool Busy{get=>busy;private set{Set(ref busy,value);Changed(nameof(NotBusy));RaiseCommands();}}
     public bool NotBusy=>!Busy;
     private string status=Text.Get("Ready");public string Status{get=>status;private set=>Set(ref status,value);}
+    private bool isScanning;public bool IsScanning{get=>isScanning;private set{if(Set(ref isScanning,value)){Changed(nameof(TaskbarProgressState));if(!value){ScanProgressValue=0;ScanProgressIndeterminate=true;ScanProgressMessage="";}}}}
+    private string scanProgressText="";public string ScanProgressMessage{get=>scanProgressText;private set=>Set(ref scanProgressText,value);}
+    private double scanProgressValue;public double ScanProgressValue{get=>scanProgressValue;private set{if(Set(ref scanProgressValue,value))Changed(nameof(TaskbarProgressValue));}}
+    private bool scanProgressIndeterminate=true;public bool ScanProgressIndeterminate{get=>scanProgressIndeterminate;private set{if(Set(ref scanProgressIndeterminate,value))Changed(nameof(TaskbarProgressState));}}
+    /// <summary>The same progress on the taskbar button, so it shows while the window is behind other windows.</summary>
+    public System.Windows.Shell.TaskbarItemProgressState TaskbarProgressState=>!IsScanning?System.Windows.Shell.TaskbarItemProgressState.None:ScanProgressIndeterminate?System.Windows.Shell.TaskbarItemProgressState.Indeterminate:System.Windows.Shell.TaskbarItemProgressState.Normal;
+    public double TaskbarProgressValue=>ScanProgressValue/100;
     private string warning="";public string CapabilityWarning{get=>warning;private set=>Set(ref warning,value);}
     private BitmapSource? preview;public BitmapSource? Preview{get=>preview;private set=>Set(ref preview,value);}
     private string previewInfo="";public string PreviewInfo{get=>previewInfo;private set=>Set(ref previewInfo,value);}
@@ -250,20 +257,27 @@ public sealed partial class MainViewModel : Bindable,IDisposable
         var selected=SelectedDevice;var scanSettings=CurrentSettings();scanSettings.Validate();PersistSettings();
         store.Save(session);state.MoveTo(SessionState.Initializing);Status=Text.Get("Initializing");
         string folder=store.Folder(session.Id);nint handle=WindowHandle();
+        // Created on the UI thread, so reports from the scanner thread arrive on the dispatcher.
+        var ui=System.Windows.Threading.Dispatcher.CurrentDispatcher;
+        int received=0;ScanProgress? latest=null;
+        void ShowProgress(){var view=ScanProgressText.Describe(latest,received);ScanProgressMessage=view.Text;ScanProgressValue=view.Percent;ScanProgressIndeterminate=view.Indeterminate;}
+        var progress=new Progress<ScanProgress>(report=>{if(!IsScanning)return;latest=report;ShowProgress();});
+        IsScanning=true;ShowProgress();
         try {
             state.MoveTo(SessionState.Scanning);Status=$"{Text.Get("Scanning")} · B {scanSettings.Brightness:+0;-0;0}, C {scanSettings.Contrast:+0;-0;0}";log.LogInformation("Scan started: brightness={Brightness}, contrast={Contrast}, crop={Crop}",scanSettings.Brightness,scanSettings.Contrast,scanSettings.AutoCrop);
             await StaTask.Run(()=>scanner.ScanAsync(selected,scanSettings,folder,async page=>{
-                await Application.Current.Dispatcher.InvokeAsync(()=>{
+                await ui.InvokeAsync(()=>{
+                    received++;ShowProgress();
                     state.MoveTo(SessionState.Processing);session.Append(page);store.Save(session);
                     Pages.Add(new(page,Pages.Count+1,folder));Status=$"{Text.Get("Scanning")} · {Pages.Count} {Text.Get("Pages")}";
                     Changed(nameof(PageSummary));state.MoveTo(SessionState.Scanning);
                 });
-            },handle,Token));
+            },handle,progress,Token));
             state.MoveTo(SessionState.Completed);Status=Text.Get("Completed");log.LogInformation("Scan completed: {Pages}",Pages.Count);
         }
         catch(OperationCanceledException){state.MoveTo(SessionState.Cancelled);throw;}
         catch{state.MoveTo(SessionState.Error);throw;}
-        finally {store.Save(session);try{SessionStore.CleanupWorkFiles(folder);}catch(IOException){}catch(UnauthorizedAccessException){}RaiseCommands();}
+        finally {IsScanning=false;store.Save(session);try{SessionStore.CleanupWorkFiles(folder);}catch(IOException){}catch(UnauthorizedAccessException){}RaiseCommands();}
         if(Pages.Count>0)RestoreSelection?.Invoke(new[]{Pages[^1].Data.Id});
         if(RemoveBlank){var blanks=session.Pages.Where(p=>p.BlankCandidate).Select(p=>p.Id).ToArray();if(blanks.Length>0&&MessageBox.Show($"Review: remove {blanks.Length} possible blank pages? Originals remain on disk and Undo can restore them.","Blank page review",MessageBoxButton.YesNo)==MessageBoxResult.Yes){session.Delete(blanks);store.Save(session);RefreshPages();}}
     }

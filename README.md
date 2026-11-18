@@ -1,4 +1,4 @@
-# Document Scanner 2.2.0 — validation candidate
+# Document Scanner 2.3.0 — validation candidate
 
 Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWAIN / eSCL, flatbed / feeder / duplex according to driver capabilities. Disk-backed PNG originals, thumbnails, page rotation, selection, reordering, Undo, profiles, recovery, JPG / PNG / multipage PDF export.
 
@@ -7,6 +7,10 @@ Native Windows WPF scanner workspace. USB / network scanner selection, WIA / TWA
 **Status:** release-ready. Windows CI passed 205 unit tests and 32 integration tests. On 18 November 2026 the project owner reported successful manual acceptance with a live ERPNext v15 site, Chrome and Edge scan links, the HP Smart Tank 615, and both win-x64/win-x86 portable packages. See `docs/Validation-Report.md` for the tested scope and remaining limitations.
 
 Sections below 2.1 describe earlier versions. Where they mention the Bridge app, searching for a document inside the application, ERPNext settings in profiles or a fixed 20 MiB limit, 2.1 replaces that behaviour.
+
+## Scan progress (2.3.0)
+
+While the scanner works, the dark preview area shows which page is scanning and how far it has got, and the taskbar button shows the same progress. The percentage comes from the scanner driver; drivers that report none show a moving bar without a number. The page image appears when the page is complete.
 
 ## Tray icon (2.2.0)
 

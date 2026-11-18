@@ -106,7 +106,9 @@ public sealed class Naps2ScannerService : IScannerService
         if(!caps.Known || caps.Sources.Length==0)throw new InvalidOperationException("The endpoint did not provide scanner capabilities.");
         return device;
     }
-    public async Task ScanAsync(DeviceInfo device,ScanSettings settings,string folder,Func<PageData,Task> acquired,nint handle,CancellationToken ct)
+    public Task ScanAsync(DeviceInfo device,ScanSettings settings,string folder,Func<PageData,Task> acquired,nint handle,CancellationToken ct)=>
+        ScanAsync(device,settings,folder,acquired,handle,null,ct);
+    public async Task ScanAsync(DeviceInfo device,ScanSettings settings,string folder,Func<PageData,Task> acquired,nint handle,IProgress<ScanProgress>? progress,CancellationToken ct)
     {
         settings.Validate();await gate.WaitAsync(ct);
         try {
@@ -124,8 +126,20 @@ public sealed class Naps2ScannerService : IScannerService
             }
             else if(settings.Paper!="Auto")options.PageSize=PageSize.Parse(settings.Paper);
             int count=0;
+            var controller=new ScanController(context);
+            if(progress!=null)
+            {
+                // Drivers can report very often; pass on only whole-percent changes.
+                int lastPage=0;double lastPercent=-1;
+                controller.PageStart+=(_,e)=>{lastPage=e.PageNumber;lastPercent=-1;progress.Report(new(e.PageNumber,null));};
+                controller.PageProgress+=(_,e)=>{
+                    double percent=Math.Floor(Math.Clamp(e.Progress,0,1)*100);
+                    if(e.PageNumber==lastPage&&percent==lastPercent)return;
+                    lastPage=e.PageNumber;lastPercent=percent;progress.Report(new(e.PageNumber,percent/100));
+                };
+            }
             try {
-                await foreach(var image in new ScanController(context).Scan(options,ct))
+                await foreach(var image in controller.Scan(options,ct))
                 {
                     using(image)
                     {

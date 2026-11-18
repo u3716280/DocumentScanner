@@ -1,4 +1,4 @@
-param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='2.2.0')
+param([ValidateSet('win-x86','win-x64')][string]$Runtime='win-x64',[string]$Version='2.3.0')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Push-Location $root
