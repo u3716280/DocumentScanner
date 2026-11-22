@@ -5,14 +5,14 @@
 
 ## 2.3.0 — Scan progress and button fix
 
-Not yet tested on Windows hardware; checked by CI only.
+Passed CI, and project-owner acceptance with a physical scanner (v2.3.0 package) was reported as passed on 22 November 2026. See `Hardware-Tests.md`.
 
 - While a page scans, a progress card on the scanner glass shows "Scanning page 2 · 45 %" with a progress bar, and the taskbar button shows the same progress. Before the first page it shows "Starting the scanner…". The percentage comes from the driver: when a driver reports none (some WIA and network/eSCL scanners), the bar moves without a number. Each finished page still appears in the page list as soon as it arrives. NAPS2 does not provide partial images, so the image itself appears only when the page is complete.
 - Fixed: the text on teal buttons in Settings, Save document, Save profile, and the send/retry dialogs disappeared on hover. They now use the same accent button as Scan, which keeps the teal background and white text on hover and when pressed.
 
 ## 2.2.0 — Tray icon and faster start
 
-Not yet tested on Windows hardware; checked by CI only.
+Passed CI, and project-owner acceptance with a physical scanner (v2.3.0 package) was reported as passed on 22 November 2026. See `Hardware-Tests.md`.
 
 - Closing the window hides Document Scanner to the notification area (a scanner icon) instead of quitting. Pages, the selected scanner and a running scan stay as they are, so opening it again, or clicking **Scan** in ERPNext, is instant. Click the icon to open it; right-click → **Exit** quits with the usual keep/discard prompt. A notice the first time explains where it went. Minimize still goes to the taskbar.
 - New application icon (a flatbed scanner) for the tray, taskbar, title bar and `.exe`, drawn by `build/make_icon.py`.
