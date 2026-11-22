@@ -27,6 +27,7 @@ try {
     Copy-Item docs/Known-Limitations.md (Join-Path $folder 'Known-Limitations.txt')
     python build/collect_licenses.py --root $root --output (Join-Path $folder 'Licenses')
     if($LASTEXITCODE -ne 0){throw 'License collection failed'}
+    Copy-Item LICENSE (Join-Path $folder 'Licenses/DocumentScanner-LICENSE.txt')
     $artifacts=Join-Path $root 'artifacts';New-Item -ItemType Directory -Force -Path $artifacts|Out-Null
     python build/verify_package.py $folder --runtime $Runtime --output (Join-Path $artifacts "$Runtime-inventory.json")
     if($LASTEXITCODE -ne 0){throw 'Static package validation failed'}

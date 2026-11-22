@@ -57,6 +57,10 @@ Output: `artifacts/DocumentScanner-v2.1.0-win-x64.zip`, `artifacts/DocumentScann
 
 Open `DocumentScanner.sln` in a Visual Studio version supporting .NET 10, or use the CLI. GitHub Actions is prepared in `.github/workflows/windows-build.yml`. Pushes and pull requests build and test without retaining a 240+ MiB portable package. Portable x64/x86 artifacts are produced only for a `v*` tag or a manual run with **publish_portable** enabled, and expire after 14 days. Promote validated packages to durable GitHub Releases with `.github/workflows/promote-release.yml`. Repository: https://github.com/u3716280/DocumentScanner. Hardware testing still requires a physical scanner.
 
+## License
+
+DocumentScanner's own code is released under the [MIT License](LICENSE). Third-party components keep their own licenses: the NAPS2 SDK is LGPL, and PDFium and the other bundled libraries are listed in [docs/Third-Party.md](docs/Third-Party.md). Portable packages carry all notices in the `Licenses` folder, including `DocumentScanner-LICENSE.txt`.
+
 ## Data, privacy and recovery
 
 Config, Logs and Sessions are beside the application when writable; otherwise under `%LOCALAPPDATA%/DocumentScanner`. Original scans can be sensitive: session folders contain unencrypted images. Keep/discard sessions explicitly and protect the folder with Windows account permissions. No telemetry, OCR downloads or scan-sharing server is enabled. ERPNext uploads are optional, explicitly confirmed actions through the standard Frappe REST API. No server-side custom app or Bridge is required; see `docs/ERPNext-Scan-Link.md`.

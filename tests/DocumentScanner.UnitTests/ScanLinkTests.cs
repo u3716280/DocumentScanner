@@ -26,9 +26,9 @@ public sealed class ScanLinkTests
     [Fact] public void LinkProducedByTheBrowsersEncoderIsRead()
     {
         // Output of encodeURIComponent in Node for the Client Script's three values.
-        const string fromBrowser = "documentscanner://scan?site=https%3A%2F%2Fhouse147.eakthai.com&doctype=Purchase%20Invoice&docname=%E0%B9%83%E0%B8%9A%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD%2F2569%20%237%20%26%2050%25%2B1";
-        Assert.Equal(new ScanLink("https://house147.eakthai.com", "Purchase Invoice", "ใบซื้อ/2569 #7 & 50%+1"), ScanLinkParser.Parse(fromBrowser));
-        Assert.Equal(fromBrowser, ScanLinkParser.Build("https://house147.eakthai.com", "Purchase Invoice", "ใบซื้อ/2569 #7 & 50%+1"));
+        const string fromBrowser = "documentscanner://scan?site=https%3A%2F%2Ferp.example.com&doctype=Purchase%20Invoice&docname=%E0%B9%83%E0%B8%9A%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD%2F2569%20%237%20%26%2050%25%2B1";
+        Assert.Equal(new ScanLink("https://erp.example.com", "Purchase Invoice", "ใบซื้อ/2569 #7 & 50%+1"), ScanLinkParser.Parse(fromBrowser));
+        Assert.Equal(fromBrowser, ScanLinkParser.Build("https://erp.example.com", "Purchase Invoice", "ใบซื้อ/2569 #7 & 50%+1"));
     }
 
     [Fact] public void SchemeAndActionAreCaseInsensitiveButDocTypeIsExact()
