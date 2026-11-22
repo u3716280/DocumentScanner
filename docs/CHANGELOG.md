@@ -1,3 +1,8 @@
+## Unreleased
+
+- DocumentScanner's own code is now released under the MIT License (`LICENSE`). Portable packages include it as `Licenses/DocumentScanner-LICENSE.txt`; third-party licenses are unchanged.
+- Tests use `erp.example.com` instead of a real site address.
+
 ## 2.3.0 — Scan progress and button fix
 
 Not yet tested on Windows hardware; checked by CI only.

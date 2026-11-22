@@ -12,6 +12,7 @@ required=['DocumentScanner.exe','DocumentScanner.dll','DocumentScanner.deps.json
  'coreclr.dll','hostfxr.dll','hostpolicy.dll','PresentationFramework.dll','PresentationCore.dll','WindowsBase.dll',
  'NAPS2.Worker.exe','NAPS2.Sdk.dll','NAPS2.Images.Wpf.dll','DocumentScanner.Scanning.dll','DocumentScanner.Export.dll']
 for name in required:assert (a.folder/name).is_file(),f'Missing dependency: {name}'
+assert (a.folder/'Licenses'/'DocumentScanner-LICENSE.txt').is_file(),'Missing DocumentScanner license'
 expected=0x8664 if a.runtime=='win-x64' else 0x14c
 assert machine(a.folder/'DocumentScanner.exe')==expected,'Application architecture mismatch'
 assert machine(a.folder/'coreclr.dll')==expected,'CoreCLR architecture mismatch'

@@ -1,5 +1,7 @@
 # Third-party dependency review
 
+DocumentScanner's own code is MIT licensed (see `LICENSE`). The components below keep their own licenses.
+
 Direct application package versions:
 
 | Package | Version | Declared license / purpose |
