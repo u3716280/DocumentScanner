@@ -55,14 +55,14 @@ jobs:
           name: DocumentScanner-portable
           path: artifacts/*
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 15
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: tests/**/TestResults/*.trx
-          retention-days: 7
+          retention-days: 15
 
       - name: Upload real WPF UI previews
         if: always()
@@ -71,4 +71,4 @@ jobs:
           name: DocumentScanner-ui-preview
           path: ui-preview/*.png
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 15
