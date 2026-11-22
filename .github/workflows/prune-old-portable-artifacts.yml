@@ -1,0 +1,48 @@
+name: Prune older DocumentScanner portable artifacts
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/prune-old-portable-artifacts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: document-scanner-portable-artifact-cleanup
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    if: github.repository == 'u3716280/DocumentScanner'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Keep newest portable artifact and delete older portable artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          artifact_list="$(mktemp)"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name == "DocumentScanner-portable" and .expired == false) | [.created_at, (.id | tostring)] | @tsv' \
+            | sort -r > "$artifact_list"
+
+          mapfile -t entries < "$artifact_list"
+          if (( ${#entries[@]} == 0 )); then
+            echo "No active DocumentScanner-portable artifact found; no files deleted."
+            exit 0
+          fi
+
+          IFS=$'\t' read -r newest_created newest_id <<< "${entries[0]}"
+          echo "Keeping latest portable artifact ID $newest_id (created $newest_created)"
+          for entry in "${entries[@]:1}"; do
+            IFS=$'\t' read -r created artifact_id <<< "$entry"
+            echo "Deleting older portable artifact ID $artifact_id (created $created)"
+            gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id"
+          done
+          echo "Completed. All other artifact types were left unchanged."
